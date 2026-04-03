@@ -23,6 +23,6 @@
     "verbatimModuleSyntax": true,
     "ignoreDeprecations": "6.0"
   },
-  "include": ["src/**/*", "bin/**/*"],
-  "exclude": ["node_modules", "dist", "tests"]
+  "include": ["src/**/*", "bin/**/*", "tests/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
