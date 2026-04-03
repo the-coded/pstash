@@ -7,6 +7,26 @@
 
 ---
 
+## 🔄 Development Workflow
+
+> **Este documento é o prompt central do desenvolvimento do `pstash`.**
+> Contém o spec completo, decisões arquiteturais e exemplos de implementação.
+
+### Como Usar Este Documento
+
+Este arquivo deve ser **lido no início de cada sessão de desenvolvimento** para garantir contexto completo. O progresso item-a-item está em [`PROGRESS.md`](./PROGRESS.md).
+
+**Regras de desenvolvimento**:
+1. 📋 **Ler `PROGRESS.md`** — verificar onde paramos na sessão anterior
+2. 🔨 **Implementar o próximo item** do batch atual
+3. ✅ **Marcar como `[x]`** no `PROGRESS.md` ao completar
+4. 💾 **Commitar** com mensagem referenciando o item (ex: `feat: 1.1 package.json setup`)
+5. 🔁 **Repetir** até completar o batch, então commit do batch
+
+> **Sessão nova?** Leia o `PROGRESS.md` primeiro — ele mostra exatamente onde parou.
+
+---
+
 ## 🎯 Executive Summary
 
 **Personal Stash** (`pstash`) é uma ferramenta CLI que estende o conceito de `git stash` com:
