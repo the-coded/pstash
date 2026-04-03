@@ -53,7 +53,7 @@ git commit -m "docs"
 # Stash arquivos do projeto atual
 pstash save "planning docs" *.md
 # ✅ Detecta projeto automaticamente
-# ✅ Salva em personal-stash/[project-name]/2026-03-12_01-05/
+# ✅ Salva em personal-stash/[project-name]/2026-03-12_01-05_k7x2/
 # ✅ Commit e push automático (se configurado)
 # ✅ Acessível de qualquer máquina
 
@@ -87,7 +87,7 @@ personal-stash/  (repo Git privado)
 ├── .gitignore
 ├── scena/                        # Projeto: scena
 │   ├── .project.json             # Metadata do projeto
-│   ├── 2026-03-12_01-05/         # Stash timestamp
+│   ├── 2026-03-12_01-05_k7x2/    # Stash: timestamp + collision-safe suffix
 │   │   ├── .stash.json           # Metadata do stash
 │   │   ├── 1_MASTER_ROADMAP.md
 │   │   ├── 1.1_IMPROVE_PERFORMANCE.md
@@ -95,27 +95,29 @@ personal-stash/  (repo Git privado)
 │   │   ├── 1.3_ZOD_IMPROVEMENTS.md
 │   │   ├── 2_PRE_LAUNCH.md
 │   │   └── 3_LLM_ABSTRACTION.md
-│   ├── 2026-03-15_14-30/         # Outro stash
+│   ├── 2026-03-15_14-30_m3p8/    # Outro stash
 │   │   ├── .stash.json
 │   │   └── draft-features.md
-│   └── 2026-03-18_09-12/
+│   └── 2026-03-18_09-12_x9q1/
 │       ├── .stash.json
 │       └── temp-notes.txt
 ├── my-app/                       # Projeto: my-app
 │   ├── .project.json
-│   ├── 2026-03-10_09-15/
+│   ├── 2026-03-10_09-15_b5r2/
 │   │   ├── .stash.json
 │   │   └── experimental-code.ts
-│   └── 2026-03-11_16-45/
+│   └── 2026-03-11_16-45_z4w7/
 │       ├── .stash.json
 │       ├── config.local.json
 │       └── debug.log
 └── website/                      # Projeto: website
     ├── .project.json
-    └── 2026-03-05_11-20/
+    └── 2026-03-05_11-20_a1c6/
         ├── .stash.json
         └── old-design.css
 ```
+
+> **ID Format**: `YYYY-MM-DD_HH-mm_XXXX` — timestamp + 4-char nanoid suffix para evitar colisões entre máquinas diferentes salvando no mesmo minuto.
 
 ---
 
@@ -142,10 +144,13 @@ personal-stash/  (repo Git privado)
   "defaults": {
     "keepOnPop": false,
     "autoPush": true,
-    "compression": true
+    "compression": true,
+    "removeAfterSave": false
   }
 }
 ```
+
+> **`removeAfterSave`**: Controla se os arquivos originais são removidos após `pstash save`. Padrão `false` — arquivos são mantidos localmente. Pode ser sobrescrito por `--rm` ou `--keep` no momento do save.
 
 ### **.project.json** (Metadata do Projeto)
 
@@ -165,7 +170,7 @@ personal-stash/  (repo Git privado)
 
 ```json
 {
-  "id": "2026-03-12_01-05",
+  "id": "2026-03-12_01-05_k7x2",
   "project": "scena",
   "timestamp": "2026-03-12T01:05:32.000Z",
   "message": "planning docs",
@@ -177,38 +182,40 @@ personal-stash/  (repo Git privado)
     {
       "name": "1_MASTER_ROADMAP.md",
       "size": 45234,
-      "hash": "a1b2c3d4e5f6"
+      "hash": "sha256:a1b2c3d4e5f6..."
     },
     {
       "name": "1.1_IMPROVE_PERFORMANCE.md",
       "size": 32156,
-      "hash": "b2c3d4e5f6g7"
+      "hash": "sha256:b2c3d4e5f6g7..."
     },
     {
       "name": "1.2_QUALITY_IMPROVEMENTS.md",
       "size": 28945,
-      "hash": "c3d4e5f6g7h8"
+      "hash": "sha256:c3d4e5f6g7h8..."
     },
     {
       "name": "1.3_ZOD_IMPROVEMENTS.md",
       "size": 41234,
-      "hash": "d4e5f6g7h8i9"
+      "hash": "sha256:d4e5f6g7h8i9..."
     },
     {
       "name": "2_PRE_LAUNCH.md",
       "size": 38567,
-      "hash": "e5f6g7h8i9j0"
+      "hash": "sha256:e5f6g7h8i9j0..."
     },
     {
       "name": "3_LLM_ABSTRACTION.md",
       "size": 63890,
-      "hash": "f6g7h8i9j0k1"
+      "hash": "sha256:f6g7h8i9j0k1..."
     }
   ],
   "totalSize": 250026,
   "compressed": true
 }
 ```
+
+> **Hash**: SHA-256 dos conteúdos via `node:crypto` — garante integridade e detecção de corrupção.
 
 ---
 
@@ -224,6 +231,8 @@ pstash save [options] <message> <files...>
 pstash save "planning docs" *.md
 pstash save -t docs -t planning "roadmap drafts" 1*.md 2*.md 3*.md
 pstash save --no-push "temp work" src/experimental/*.ts
+pstash save --rm "docs to archive" *.md    # Remove arquivos após salvar
+pstash save --keep "wip files" src/*.ts    # Força manter (mesmo com config removeAfterSave=true)
 
 # Options
 -t, --tag <tag>           Add tag (repeatable)
@@ -231,10 +240,12 @@ pstash save --no-push "temp work" src/experimental/*.ts
 --no-push                 Don't push to remote
 --no-compress             Don't compress files
 -m, --message <msg>       Alias for message (git-style)
+--rm                      Remove source files after saving (overrides config)
+--keep                    Keep source files after saving (overrides config)
 
 # Output
 ✓ Detected project: scena
-✓ Created stash: scena/2026-03-12_01-05
+✓ Created stash: scena/2026-03-12_01-05_k7x2
 ✓ Saved 6 files (245KB)
 ✓ Pushed to remote
 ```
@@ -251,6 +262,7 @@ pstash list --all                  # Todos os projetos
 pstash list --project scena        # Projeto específico
 pstash list --tag docs             # Por tag
 pstash list --since 7d             # Últimos 7 dias
+pstash list --preview              # Mostra 3 primeiras linhas de cada arquivo
 
 # Options
 -a, --all                 List all projects
@@ -258,16 +270,16 @@ pstash list --since 7d             # Últimos 7 dias
 -t, --tag <tag>           Filter by tag
 --since <timespec>        Since date (7d, 2w, 1m, 2026-03-01)
 --until <timespec>        Until date
+--preview                 Show first 3 lines of each file
 --json                    Output JSON
 
-# Output
+# Output (--preview)
 scena:
   [0] 2026-03-12 01:05 - planning docs (6 files, 245KB) [docs, planning]
+      1_MASTER_ROADMAP.md: # Master Roadmap | Phase 1: Core Improvements...
+      2_PRE_LAUNCH.md: # Pre-Launch Checklist | ## CI/CD Pipeline...
   [1] 2026-03-10 18:22 - experiments (3 files, 12KB) [wip]
-  [2] 2026-03-08 14:15 - draft features (1 file, 8KB)
-
-my-app:
-  [0] 2026-03-10 09:15 - experimental code (1 file, 5KB) [experiment]
+      experimental.ts: export const newFeature = () => { // WIP...
 ```
 
 ### **`pstash show`** - Exibir Conteúdo
@@ -293,7 +305,7 @@ pstash show 0 --cat "*.md"         # Exibe conteúdo dos .md
   [1] 2026-03-10 18:22 - experiments (3 files, 12KB) [wip]
 
 # Output
-Stash: [project-name]/2026-03-12_01-05
+Stash: [project-name]/2026-03-12_01-05_k7x2
 Message: planning docs
 Tags: docs, planning
 Date: 2026-03-12 01:05:32
@@ -335,8 +347,8 @@ pstash pop 0 --dest ~/temp         # Pop para pasta específica
   [2] 2026-03-08 14:15 - draft features (1 file, 8KB)
 
 # Output
-✓ Restored 6 files from scena/2026-03-12_01-05
-✓ Deleted stash scena/2026-03-12_01-05
+✓ Restored 6 files from scena/2026-03-12_01-05_k7x2
+✓ Deleted stash scena/2026-03-12_01-05_k7x2
 ```
 
 ### **`pstash apply`** - Restaurar sem Deletar
@@ -424,6 +436,29 @@ pstash sync --push                 # Push only
 ✓ Synced 3 stashes
 ```
 
+### **`pstash status`** - Status do Projeto Atual
+
+```bash
+# Sintaxe
+pstash status [options]
+
+# Exemplos
+pstash status                      # Status do projeto atual
+pstash status --all                # Status de todos os projetos
+
+# Options
+-a, --all                 Show all projects
+--json                    Output JSON
+
+# Output
+Project: scena
+Stashes: 3 (268KB total)
+Last stash: 2026-03-18 09:12 - temp-notes (wip)
+Last sync: 2 hours ago
+Remote: git@github.com:gabemule/personal-stash.git ✓
+Unpushed: 0
+```
+
 ### **`pstash diff`** - Comparar Stashes
 
 ```bash
@@ -445,10 +480,10 @@ pstash diff 0 pwd                  # Diff entre stash 0 e working dir
 ❯ [1] 2026-03-10 18:22 - experiments
 
 # Output
-Files only in scena/2026-03-12_01-05:
+Files only in scena/2026-03-12_01-05_k7x2:
   + 3_LLM_ABSTRACTION.md
 
-Files only in scena/2026-03-10_18-22:
+Files only in scena/2026-03-10_18-22_p4n1:
   + experiments.ts
 
 Files modified:
@@ -471,9 +506,12 @@ pstash init --remote git@github.com:user/ps.git # Non-interactive
 
 # Output
 ✓ Cloned personal-stash repo
+✓ Configured line endings (core.autocrlf=false, core.eol=lf)
 ✓ Created config ~/.pstashrc
 ✓ Ready to use!
 ```
+
+> **Line endings**: `pstash init` configura `core.autocrlf=false` e `core.eol=lf` via `simple-git` no repo local do stash — garante consistência entre macOS, Linux e Windows sem necessidade de `.gitattributes`.
 
 ### **`pstash config`** - Configuração
 
@@ -482,15 +520,17 @@ pstash init --remote git@github.com:user/ps.git # Non-interactive
 pstash config <key> [value]
 
 # Exemplos
-pstash config list                 # Lista configurações
-pstash config autoSync true        # Habilita auto-sync
-pstash config autoPush false       # Desabilita auto-push
+pstash config list                    # Lista configurações
+pstash config autoSync true           # Habilita auto-sync
+pstash config autoPush false          # Desabilita auto-push
+pstash config removeAfterSave true    # Remove arquivos após save por padrão
 
 # Keys
-autoSync      Auto pull/push on save/pop
-autoPush      Auto push on save
-compression   Compress files
-keepOnPop     Keep stash on pop (default: false)
+autoSync          Auto pull/push on save/pop
+autoPush          Auto push on save
+compression       Compress files
+keepOnPop         Keep stash on pop (default: false)
+removeAfterSave   Remove source files after save (default: false)
 ```
 
 ---
@@ -503,7 +543,7 @@ keepOnPop     Keep stash on pop (default: false)
 # No projeto scena
 cd ~/Documents/CodePlay/e2e-gen
 
-# Stash markdowns de planejamento
+# Stash markdowns de planejamento (mantém arquivos locais por padrão)
 pstash save -t docs -t planning "planning docs v1" 1*.md 2*.md 3*.md
 
 # Adiciona ao .gitignore
@@ -546,11 +586,10 @@ pstash apply 0
 
 ```bash
 # Testando nova feature experimental
-pstash save -t wip -t experiment "new auth flow" src/auth/*.ts
+pstash save --rm -t wip -t experiment "new auth flow" src/auth/*.ts
+# --rm remove os arquivos do projeto após stash
 
-# Volta para código limpo
-git checkout .
-
+# Volta para código limpo automaticamente
 # Trabalha em outra feature...
 
 # Depois retoma experimento
@@ -611,19 +650,26 @@ pstash clean --keep 10  # Mantém apenas 10 mais recentes por projeto
     "zod": "latest",               // Schema validation & type inference (SSoT)
     "chalk": "latest",             // Terminal colors
     "ora": "latest",               // Spinners
-    "simple-git": "latest",        // Git operations
-    "globby": "latest",            // File patterns
+    "simple-git": "latest",        // Git operations (cross-platform)
+    "globby": "latest",            // File patterns (cross-platform)
     "date-fns": "latest",          // Date parsing
     "pretty-bytes": "latest",      // Size formatting
-    "tar": "latest",               // Compression
-    "nanoid": "latest",            // IDs
+    "tar": "latest",               // Compression (cross-platform)
+    "nanoid": "latest",            // Stash ID suffix (collision prevention)
     "@inquirer/prompts": "latest"  // Interactive CLI prompts
   },
   "devDependencies": {
     "@types/node": "latest",       // Node types
+    "@types/tar": "latest",        // Tar types
+    "typescript": "latest",        // TypeScript compiler
     "vitest": "latest",            // Testing
     "tsx": "latest",               // TS execution
-    "tsup": "latest"               // Bundler
+    "tsup": "latest",              // Bundler
+    "eslint": "^9.0.0",            // Linter (flat config)
+    "@typescript-eslint/eslint-plugin": "latest",
+    "@typescript-eslint/parser": "latest",
+    "eslint-config-prettier": "latest",
+    "prettier": "latest"           // Formatter
   }
 }
 ```
@@ -680,6 +726,7 @@ export const SaveOptionsSchema = z.object({
   project: z.string().optional(),
   push: z.boolean().default(true),
   compress: z.boolean().default(true),
+  removeAfterSave: z.boolean().optional(),  // undefined = use config default
 })
 
 export type SaveOptions = z.infer<typeof SaveOptionsSchema>
@@ -704,6 +751,8 @@ personal-stash-cli/
 ├── tsconfig.json
 ├── tsup.config.ts
 ├── vitest.config.ts
+├── eslint.config.ts             # ESLint v9 flat config
+├── .prettierrc
 ├── README.md
 ├── LICENSE
 ├── .npmrc
@@ -720,17 +769,18 @@ personal-stash-cli/
 │   │   ├── drop.ts              # pstash drop (interactive + confirm)
 │   │   ├── clean.ts             # pstash clean
 │   │   ├── sync.ts              # pstash sync
+│   │   ├── status.ts            # pstash status
 │   │   ├── diff.ts              # pstash diff (interactive)
 │   │   ├── init.ts              # pstash init
 │   │   └── config.ts            # pstash config
 │   ├── core/
-│   │   ├── detector.ts          # Project detection
+│   │   ├── detector.ts          # Project detection (simple-git, cross-platform)
 │   │   ├── stasher.ts           # Create/restore stash
 │   │   ├── indexer.ts           # Manage metadata
 │   │   ├── compressor.ts        # File compression
-│   │   └── git.ts               # Git operations wrapper
+│   │   └── git.ts               # Git operations wrapper (simple-git)
 │   ├── config/
-│   │   ├── loader.ts            # Load .pstashrc
+│   │   ├── loader.ts            # Load .pstashrc (os.homedir())
 │   │   └── templates.ts         # Default configs
 │   ├── utils/
 │   │   ├── fs.ts                # File system utils
@@ -767,7 +817,7 @@ export const StashMetadataSchema = z.object({
   files: z.array(z.object({
     name: z.string(),
     size: z.number(),
-    hash: z.string(),
+    hash: z.string(),  // SHA-256 via node:crypto
   })),
   totalSize: z.number(),
   compressed: z.boolean().default(false),
@@ -800,6 +850,7 @@ export const GlobalConfigSchema = z.object({
     keepOnPop: z.boolean().default(false),
     autoPush: z.boolean().default(true),
     compression: z.boolean().default(true),
+    removeAfterSave: z.boolean().default(false),
   }),
 })
 
@@ -815,36 +866,45 @@ export type GlobalConfig = z.infer<typeof GlobalConfigSchema>
 ```typescript
 // src/core/detector.ts
 
-import { execSync } from "node:child_process"
-import { basename } from "node:path"
+import { join, basename } from "node:path"
+import { homedir } from "node:os"
+import simpleGit from "simple-git"
+import type { GlobalConfig } from "../schemas.js"
 
 export class ProjectDetector {
   /**
    * Detecta projeto atual baseado em git remote ou diretório.
+   * Usa simple-git para compatibilidade cross-platform.
    */
-  detect(): string {
+  async detect(): Promise<string> {
     try {
-      // Tenta git remote primeiro
-      const remote = execSync("git remote get-url origin", { 
-        encoding: "utf-8",
-        stdio: ["pipe", "pipe", "ignore"]
-      }).trim()
-      
-      if (remote) {
+      const git = simpleGit(process.cwd())
+      const remotes = await git.getRemotes(true)
+      const origin = remotes.find(r => r.name === "origin")
+
+      if (origin?.refs.fetch) {
         // Extrai nome do repo
         // git@github.com:gabemule/scena.git → scena
         // https://github.com/gabemule/scena.git → scena
-        const match = remote.match(/\/([^\/]+?)(\.git)?$/)
+        const match = origin.refs.fetch.match(/\/([^\/]+?)(\.git)?$/)
         if (match) return match[1]
       }
     } catch (err) {
       // Não é repo git ou sem remote
     }
-    
+
     // Fallback: nome do diretório atual
     return basename(process.cwd())
   }
-  
+
+  /**
+   * Retorna path cross-platform para o config global.
+   * Usa os.homedir() — funciona em macOS, Linux e Windows.
+   */
+  static get configPath(): string {
+    return join(homedir(), ".pstashrc")
+  }
+
   /**
    * Resolve aliases de projeto.
    */
@@ -862,18 +922,21 @@ export class ProjectDetector {
 ```typescript
 // src/core/stasher.ts
 
-import { copyFile, mkdir } from "node:fs/promises"
+import { copyFile, mkdir, readFile, writeFile, stat } from "node:fs/promises"
 import { join, basename } from "node:path"
+import { createHash } from "node:crypto"
+import { userInfo, hostname } from "node:os"
 import { nanoid } from "nanoid"
 import { format } from "date-fns"
 import { globby } from "globby"
+import { StashMetadataSchema } from "../schemas.js"
 import type { StashMetadata } from "../schemas.js"
 
 export class Stasher {
   constructor(
     private stashRepoPath: string
   ) {}
-  
+
   async save(options: {
     project: string
     message: string
@@ -883,40 +946,45 @@ export class Stasher {
     commit?: string
   }): Promise<StashMetadata> {
     const timestamp = new Date()
-    const id = format(timestamp, "yyyy-MM-dd_HH-mm")
-    
+    // Timestamp + 4-char suffix: previne colisão entre máquinas no mesmo minuto
+    const id = `${format(timestamp, "yyyy-MM-dd_HH-mm")}_${nanoid(4)}`
+
     const stashDir = join(
       this.stashRepoPath,
       options.project,
       id
     )
-    
+
     await mkdir(stashDir, { recursive: true })
-    
+
     // Resolve file patterns
     const resolvedFiles = await globby(options.files, {
       cwd: process.cwd(),
       absolute: true,
     })
-    
-    // Copy files
+
+    // Copy files and generate SHA-256 hashes
     const fileMetadata = []
     let totalSize = 0
-    
+
     for (const file of resolvedFiles) {
       const dest = join(stashDir, basename(file))
       await copyFile(file, dest)
-      
-      const stats = await stat(file)
+
+      const content = await readFile(file)
+      const fileStats = await stat(file)
+      const hash = `sha256:${createHash("sha256").update(content).digest("hex").slice(0, 12)}`
+
       fileMetadata.push({
         name: basename(file),
-        size: stats.size,
-        hash: nanoid(12),  // Simplified hash
+        size: fileStats.size,
+        hash,
       })
-      totalSize += stats.size
+      totalSize += fileStats.size
     }
-    
+
     // Create metadata
+    // os.userInfo().username é cross-platform (macOS, Linux, Windows)
     const metadata: StashMetadata = {
       id,
       project: options.project,
@@ -925,21 +993,21 @@ export class Stasher {
       tags: options.tags ?? [],
       branch: options.branch,
       commit: options.commit,
-      user: `${process.env.USER}@${os.hostname()}`,
+      user: `${userInfo().username}@${hostname()}`,
       files: fileMetadata,
       totalSize,
       compressed: false,
     }
-    
+
     // Save metadata
     await writeFile(
       join(stashDir, ".stash.json"),
       JSON.stringify(metadata, null, 2)
     )
-    
+
     return metadata
   }
-  
+
   async restore(options: {
     project: string
     stashId: string
@@ -951,31 +1019,49 @@ export class Stasher {
       options.project,
       options.stashId
     )
-    
-    // Read metadata
+
+    // Read and validate metadata
     const metadataPath = join(stashDir, ".stash.json")
     const metadata = StashMetadataSchema.parse(
       JSON.parse(await readFile(metadataPath, "utf-8"))
     )
-    
+
     // Determine files to restore
     let filesToRestore = metadata.files.map(f => f.name)
     if (options.files) {
+      const { minimatch } = await import("minimatch")
       const patterns = options.files
       filesToRestore = filesToRestore.filter(name =>
         patterns.some(p => minimatch(name, p))
       )
     }
-    
-    // Copy files
+
+    // Copy files to destination
     for (const fileName of filesToRestore) {
       const src = join(stashDir, fileName)
       const dest = join(options.dest, fileName)
       await copyFile(src, dest)
     }
-    
+
     return metadata
   }
+}
+```
+
+### **Git Initialization (Line Endings)**
+
+```typescript
+// src/core/git.ts (trecho relevante do pstash init)
+
+import simpleGit from "simple-git"
+
+export async function initStashRepo(repoPath: string): Promise<void> {
+  const git = simpleGit(repoPath)
+
+  // Configura line endings consistentes cross-platform
+  // Sem necessidade de .gitattributes no repo remoto
+  await git.addConfig("core.autocrlf", "false")
+  await git.addConfig("core.eol", "lf")
 }
 ```
 
@@ -988,19 +1074,21 @@ export class Stasher {
 **Objetivo**: Funcionalidade básica para resolver problema imediato
 
 **Escopo**:
+- [ ] Setup projeto com ESLint + Prettier + TypeScript
 - [ ] CLI básico com Commander
 - [ ] Comandos: `init`, `save`, `list`, `pop`, `apply`
-- [ ] Detecção de projeto (git remote + fallback)
-- [ ] Estrutura de pastas (projeto/timestamp)
-- [ ] Metadata simples (.stash.json)
-- [ ] Git operations (clone, commit, push, pull)
-- [ ] Sem compressão, sem tags, sem busca avançada
+- [ ] Detecção de projeto (simple-git remote + fallback)
+- [ ] Estrutura de pastas (projeto/timestamp_suffix)
+- [ ] Metadata simples (.stash.json com SHA-256)
+- [ ] Git operations (clone, commit, push, pull) via simple-git
+- [ ] Configuração de line endings no init
+- [ ] Cross-platform: `os.userInfo()`, `os.homedir()`, `path.join()`
 
 **Estimativa**: 8-10h
 - Setup projeto + CLI framework: 1h
-- Project detector: 1h
-- Stasher (save/restore): 3h
-- Git wrapper: 1h
+- Project detector (simple-git): 1h
+- Stasher (save/restore + SHA-256): 3h
+- Git wrapper (simple-git): 1h
 - List command: 1h
 - Commands (init, pop, apply): 2h
 - Testing básico: 1h
@@ -1013,20 +1101,24 @@ export class Stasher {
 
 **Escopo**:
 - [ ] Tags (`-t` flag)
+- [ ] `--rm` / `--keep` flags no save
+- [ ] Config `removeAfterSave`
 - [ ] Busca/filtros (`--tag`, `--since`, `--until`)
+- [ ] `--preview` no list
 - [ ] Project metadata (.project.json)
 - [ ] Auto-sync (config)
 - [ ] `show` command com `--cat`
 - [ ] `drop` command
+- [ ] `status` command
 - [ ] Error handling robusto
 - [ ] Mensagens de output bonitas (chalk, ora)
 
 **Estimativa**: 6-8h
-- Tags system: 2h
-- Filtros avançados: 2h
+- Tags + remove flags: 2h
+- Filtros + preview: 2h
 - Metadata enriquecida: 1h
 - Auto-sync: 1h
-- Commands extras (show, drop): 1h
+- Commands extras (show, drop, status): 1h
 - Polish UX: 1h
 
 ---
@@ -1036,7 +1128,7 @@ export class Stasher {
 **Objetivo**: Advanced features
 
 **Escopo**:
-- [ ] Compressão (tar.gz)
+- [ ] Compressão (tar.gz via `tar` package)
 - [ ] Restaurar parcial (`--files` pattern)
 - [ ] `clean` command (--older-than, --keep)
 - [ ] `diff` command
@@ -1082,6 +1174,22 @@ export class Stasher {
 | **Sincronização** | ✅ Auto | ❌ | ⚠️ Manual | ⚠️ Manual |
 | **Facilidade** | 🟢 CLI simples | 🟡 Médio | 🔴 Complexo | 🔴 Complexo |
 | **Overhead** | 🟢 1 repo | 🟢 Nenhum | 🔴 N repos | 🟡 N branches |
+| **Cross-platform** | ✅ | ✅ | ⚠️ Manual | ⚠️ Manual |
+
+---
+
+## 🌍 Compatibilidade Cross-Platform
+
+| Aspecto | Solução |
+|---------|---------|
+| **Username** | `os.userInfo().username` (não `process.env.USER`) |
+| **Home dir** | `os.homedir()` (não `~` literal) |
+| **Paths** | `path.join()` (não `/` hardcoded) |
+| **Git ops** | `simple-git` (não `execSync("git ...")`) |
+| **Line endings** | `git.addConfig("core.eol", "lf")` no init |
+| **Compressão** | `tar` package (não binário `tar` do sistema) |
+| **Glob patterns** | `globby` (cross-platform) |
+| **Node version** | `engines: { "node": ">=20.0.0" }` |
 
 ---
 
@@ -1098,7 +1206,7 @@ export class Stasher {
   - Passwords
   - Private keys
   - Tokens
-  
+
 - ✅ Para isso, use secrets managers:
   - 1Password CLI
   - AWS Secrets Manager
@@ -1155,6 +1263,20 @@ pstash config autoSync true
 pstash config autoPush true
 ```
 
+### **5. removeAfterSave por Contexto**
+
+```bash
+# Para quem prefere gerenciar os arquivos manualmente (padrão)
+pstash config removeAfterSave false
+pstash save "docs" *.md         # Arquivos ficam; você remove quando quiser
+
+# Para arquivar de vez (use --rm por operação)
+pstash save --rm "archived docs" old-*.md
+
+# Para manter sempre, mesmo com config true
+pstash save --keep "wip" *.ts
+```
+
 ---
 
 ## 🚀 Quick Start Guide
@@ -1204,8 +1326,14 @@ pstash save "message" *.md
 # Ver stashes
 pstash list
 
+# Preview rápido
+pstash list --preview
+
 # Restaurar
 pstash pop 0
+
+# Status do projeto
+pstash status
 
 # Sincronizar
 pstash sync
@@ -1228,7 +1356,7 @@ pstash sync
    cd personal-stash-cli
    npm init -y
    npm install commander zod chalk ora simple-git globby date-fns pretty-bytes tar nanoid @inquirer/prompts
-   npm install -D @types/node typescript tsx tsup vitest
+   npm install -D @types/node @types/tar typescript tsx tsup vitest eslint @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint-config-prettier prettier
    ```
 
 3. **Seguir roadmap Phase 1 (MVP)**
@@ -1241,18 +1369,22 @@ Enquanto a CLI não existe, você pode fazer manualmente:
 # 1. Clonar repo
 git clone git@github.com:gabemule/personal-stash.git ~/personal-stash
 
-# 2. Criar estrutura manual
+# 2. Configurar line endings (cross-platform)
 cd ~/personal-stash
-mkdir -p scena/2026-03-12_01-30
-cd scena/2026-03-12_01-30
+git config core.autocrlf false
+git config core.eol lf
 
-# 3. Copiar arquivos
+# 3. Criar estrutura manual
+mkdir -p scena/2026-03-12_01-30_abcd
+cd scena/2026-03-12_01-30_abcd
+
+# 4. Copiar arquivos
 cp ~/Documents/CodePlay/e2e-gen/*.md .
 
-# 4. Criar metadata
+# 5. Criar metadata
 cat > .stash.json << 'EOF'
 {
-  "id": "2026-03-12_01-30",
+  "id": "2026-03-12_01-30_abcd",
   "project": "scena",
   "message": "planning docs",
   "timestamp": "2026-03-12T01:30:00.000Z",
@@ -1260,13 +1392,13 @@ cat > .stash.json << 'EOF'
 }
 EOF
 
-# 5. Commit e push
+# 6. Commit e push
 cd ~/personal-stash
 git add .
 git commit -m "stash(scena): planning docs"
 git push
 
-# 6. No projeto scena, ignore os markdowns
+# 7. No projeto scena, ignore os markdowns
 cd ~/Documents/CodePlay/e2e-gen
 echo "1*.md" >> .gitignore
 echo "2*.md" >> .gitignore
@@ -1276,6 +1408,6 @@ git commit -am "chore: ignore planning docs"
 
 ---
 
-**Última atualização**: 2026-03-12  
+**Última atualização**: 2026-04-03  
 **Autor**: Proposta arquitetural para Personal Stash CLI  
 **Status**: Proposta aprovada - Pronta para implementação
