@@ -182,8 +182,8 @@ export type ProjectConfig = z.infer<typeof ProjectConfigSchema>
 export const GlobalConfigSchema = z.object({
   /** Config schema version for future migrations */
   version: z.string(),
-  /** SSH or HTTPS URL of the personal stash data repository */
-  remote: z.string().url(),
+  /** SSH or HTTPS URL of the personal stash data repository (SSH or HTTPS) */
+  remote: z.string().min(1, "Remote URL is required"),
   /**
    * Local path for the cloned stash data repo.
    * Supports `~` expansion: `"~/.pstash"` → `"/Users/gab/.pstash"`.
@@ -309,8 +309,8 @@ export type RestoreOptions = z.infer<typeof RestoreOptionsSchema>
  * Options for `pstash init` command.
  */
 export const InitOptionsSchema = z.object({
-  /** SSH or HTTPS URL for the data repo */
-  remote: z.string().url().optional(),
+  /** SSH or HTTPS URL for the data repo (SSH or HTTPS) */
+  remote: z.string().min(1).optional(),
   /** Local path to clone to (default: ~/.pstash) */
   path: z.string().optional(),
 })

@@ -118,7 +118,8 @@ describe("loadConfig", () => {
   })
 
   it("throws with 'Config validation failed' on schema mismatch", async () => {
-    const invalid = { version: "1.0.0", remote: "not-a-url" }
+    // remote is required (min length 1) — missing it should fail validation
+    const invalid = { version: "1.0.0" }
     vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify(invalid))
     await expect(loadConfig()).rejects.toThrow("Config validation failed")
   })
