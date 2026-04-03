@@ -11,7 +11,7 @@
 
 | Batch | Descrição | Status |
 |-------|-----------|--------|
-| Batch 1 | Fundação (setup do projeto) | ⏳ Pendente |
+| Batch 1 | Fundação (setup do projeto) | ✅ Completo |
 | Batch 2 | Schemas + Config (Zod SSoT) | ⏳ Pendente |
 | Batch 3 | Core Engine | ⏳ Pendente |
 | Batch 4 | CLI + Comandos Phase 1 (MVP) | ⏳ Pendente |
@@ -25,17 +25,17 @@
 
 > **Objetivo**: Estrutura base do projeto com tooling configurado.
 
-- [ ] 1.1 `package.json` — deps (prod + dev), scripts, bin, engines, type:module
-- [ ] 1.2 `tsconfig.json` — strict, ESM, paths aliases
-- [ ] 1.3 `tsup.config.ts` — build config (ESM, externals, shebang)
-- [ ] 1.4 `eslint.config.ts` — ESLint v9 flat config + TypeScript + Prettier
-- [ ] 1.5 `.prettierrc` — Prettier config
-- [ ] 1.6 `.npmrc` — npm config
-- [ ] 1.7 `.gitignore` — node_modules, dist, .env, etc.
-- [ ] 1.8 `vitest.config.ts` — test config
-- [ ] 1.9 `npm install` — instalar todas as deps
-- [ ] 1.10 Verificar compilação (`tsc --noEmit`)
-- [ ] 1.11 **COMMIT**: `feat: project setup — TS, ESLint v9, Prettier, Vitest, tsup`
+- [x] 1.1 `package.json` — deps (prod + dev), scripts, bin, engines, type:module
+- [x] 1.2 `tsconfig.json` — strict, ESM, paths aliases
+- [x] 1.3 `tsup.config.ts` — build config (ESM, externals, shebang)
+- [x] 1.4 `eslint.config.ts` — ESLint v9 flat config + TypeScript + Prettier
+- [x] 1.5 `.prettierrc` — Prettier config
+- [x] 1.6 `.npmrc` — npm config
+- [x] 1.7 `.gitignore` — node_modules, dist, .env, etc.
+- [x] 1.8 `vitest.config.ts` — test config
+- [x] 1.9 `npm install` — instalar todas as deps
+- [x] 1.10 Verificar compilação (`tsc --noEmit`)
+- [x] 1.11 **COMMIT**: `feat: project setup — TS, ESLint v9, Prettier, Vitest, tsup`
 
 ---
 

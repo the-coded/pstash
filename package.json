@@ -1,0 +1,73 @@
+{
+  "name": "pstash",
+  "version": "0.1.0",
+  "description": "Git-backed personal file stash — persistent, project-categorized, multi-machine",
+  "type": "module",
+  "bin": {
+    "pstash": "./dist/bin/pstash.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsx watch bin/pstash.ts",
+    "start": "tsx bin/pstash.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "prepublishOnly": "npm run build && npm run typecheck"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "keywords": [
+    "stash",
+    "git",
+    "cli",
+    "files",
+    "backup",
+    "sync",
+    "personal"
+  ],
+  "author": "gabemule",
+  "license": "MIT",
+  "dependencies": {
+    "@inquirer/prompts": "^8.3.2",
+    "chalk": "^5.6.2",
+    "commander": "^14.0.3",
+    "date-fns": "^4.1.0",
+    "globby": "^16.2.0",
+    "micromatch": "^4.0.8",
+    "nanoid": "^5.1.7",
+    "ora": "^9.3.0",
+    "pretty-bytes": "^7.1.0",
+    "simple-git": "^3.33.0",
+    "tar": "^7.5.13",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/micromatch": "^4.0.10",
+    "@types/node": "^25.5.0",
+    "@types/tar": "^6.1.13",
+    "@typescript-eslint/eslint-plugin": "^8.58.0",
+    "@typescript-eslint/parser": "^8.58.0",
+    "eslint": "^10.1.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.1",
+    "tsup": "^8.5.1",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
+  }
+}
