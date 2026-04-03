@@ -17,7 +17,7 @@
 | Batch 4 | CLI + Comandos Phase 1 (MVP) | ✅ Completo |
 | Batch 5 | Phase 2 — Features Essenciais | ✅ Completo |
 | Batch 6 | Phase 3 — Advanced Features | ✅ Completo |
-| Batch 7 | Phase 4 — Excellence | ⏳ Pendente |
+| Batch 7 | Phase 4 — Excellence | ✅ Completo |
 
 ---
 
@@ -130,19 +130,19 @@
 
 > **Objetivo**: Testes, documentação e production-ready.
 
-- [ ] 7.1 `tests/core/detector.test.ts` — testes do ProjectDetector
-- [ ] 7.2 `tests/core/stasher.test.ts` — testes do Stasher (save/restore)
-- [ ] 7.3 `tests/core/git.test.ts` — testes do GitManager (mock simple-git)
-- [ ] 7.4 `tests/core/indexer.test.ts` — testes do Indexer
-- [ ] 7.5 `tests/utils/time.test.ts` — testes do timespec parser
-- [ ] 7.6 `tests/utils/format.test.ts` — testes dos formatters
-- [ ] 7.7 `tests/utils/validation.test.ts` — testes dos Zod helpers
-- [ ] 7.8 `tests/config/loader.test.ts` — testes do config loader
-- [ ] 7.9 `README.md` completo (instalação, setup, uso diário, todos os comandos)
-- [ ] 7.10 `LICENSE` (MIT)
-- [ ] 7.11 Build final `npm run build` + testar `dist/bin/pstash.js --help`
-- [ ] 7.12 `npm pack` — verificar pacote antes de publicar
-- [ ] 7.13 **COMMIT**: `feat: Phase 4 — tests, README, build verification`
+- [x] 7.1 `tests/core/detector.test.ts` — testes do ProjectDetector (18 testes)
+- [x] 7.2 `tests/core/stasher.test.ts` — testes do Stasher (save/restore) (15 testes)
+- [x] 7.3 `tests/core/git.test.ts` — testes do GitManager (mock simple-git) (19 testes)
+- [x] 7.4 `tests/core/indexer.test.ts` — testes do Indexer (12 testes)
+- [x] 7.5 `tests/utils/time.test.ts` — testes do timespec parser (25 testes)
+- [x] 7.6 `tests/utils/format.test.ts` — testes dos formatters (25 testes)
+- [x] 7.7 `tests/utils/validation.test.ts` — testes dos Zod helpers (20 testes)
+- [x] 7.8 `tests/config/loader.test.ts` — testes do config loader (13 testes)
+- [x] 7.9 `README.md` completo (instalação, setup, uso diário, todos os comandos)
+- [x] 7.10 `LICENSE` (MIT)
+- [x] 7.11 Build final `npm run build` + testar `dist/bin/pstash.js --help` ✅
+- [x] 7.12 `npm pack` — 9 arquivos, 73.3 KB ✅
+- [x] 7.13 **COMMIT**: `feat: Phase 4 — tests, README, build verification`
 
 ---
 
@@ -155,4 +155,4 @@
 
 ---
 
-*Última atualização: 2026-04-03 — Batch 6 concluído*
+*Última atualização: 2026-04-03 — Batch 7 concluído · 147 testes · 8 arquivos de teste · production-ready*
