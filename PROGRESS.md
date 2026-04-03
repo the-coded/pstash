@@ -12,7 +12,7 @@
 | Batch | Descrição | Status |
 |-------|-----------|--------|
 | Batch 1 | Fundação (setup do projeto) | ✅ Completo |
-| Batch 2 | Schemas + Config (Zod SSoT) | ⏳ Pendente |
+| Batch 2 | Schemas + Config (Zod SSoT) | ✅ Completo |
 | Batch 3 | Core Engine | ⏳ Pendente |
 | Batch 4 | CLI + Comandos Phase 1 (MVP) | ⏳ Pendente |
 | Batch 5 | Phase 2 — Features Essenciais | ⏳ Pendente |
@@ -43,11 +43,11 @@
 
 > **Objetivo**: Zod como Single Source of Truth para todos os tipos.
 
-- [ ] 2.1 `src/schemas.ts` — GlobalConfigSchema, StashMetadataSchema, ProjectMetadataSchema, SaveOptionsSchema, + types derivados
-- [ ] 2.2 `src/config/loader.ts` — load/save `~/.pstashrc` (os.homedir())
-- [ ] 2.3 `src/config/templates.ts` — default config template
-- [ ] 2.4 `src/utils/validation.ts` — Zod helpers (safeParseJson, etc.)
-- [ ] 2.5 **COMMIT**: `feat: Zod schemas (SSoT) + config loader`
+- [x] 2.1 `src/schemas.ts` — GlobalConfigSchema, StashMetadataSchema, ProjectMetadataSchema, SaveOptionsSchema, + types derivados
+- [x] 2.2 `src/config/loader.ts` — load/save `~/.pstashrc` (os.homedir())
+- [x] 2.3 `src/config/templates.ts` — default config template
+- [x] 2.4 `src/utils/validation.ts` — Zod helpers (safeParseJson, etc.)
+- [x] 2.5 **COMMIT**: `feat: Zod schemas (SSoT) + config loader`
 
 ---
 
