@@ -78,10 +78,10 @@ pstash pop 0 # restaura
 
 ## 📐 Arquitetura
 
-### **Estrutura do Repo `personal-stash`**
+### **Estrutura do Repo `my-personal-stash`** (dados)
 
 ```
-personal-stash/  (repo Git privado — dados apenas, sem config)
+my-personal-stash/  (repo Git privado — dados apenas, sem config)
 ├── README.md                     # Documentação
 ├── .gitignore
 ├── scena/                        # Projeto: scena
@@ -131,7 +131,7 @@ personal-stash/  (repo Git privado — dados apenas, sem config)
 ```json
 {
   "version": "1.0.0",
-  "remote": "git@github.com:gabemule/personal-stash.git",
+  "remote": "git@github.com:gabemule/my-personal-stash.git",
   "localPath": "~/.pstash",
   "autoSync": true,
   "projects": {
@@ -141,7 +141,7 @@ personal-stash/  (repo Git privado — dados apenas, sem config)
       "path": "/Users/gab/Documents/CodePlay/e2e-gen"
     },
     "my-app": {
-      "remote": "git@github.com:company/my-app.git",
+      "remote": "git@github.com:gabemule/my-app.git",
       "path": "/Users/gab/projects/my-app"
     }
   },
@@ -459,7 +459,7 @@ Project: scena
 Stashes: 3 (268KB total)
 Last stash: 2026-03-18 09:12 - temp-notes (wip)
 Last sync: 2 hours ago
-Remote: git@github.com:gabemule/personal-stash.git ✓
+Remote: git@github.com:gabemule/my-personal-stash.git ✓
 Unpushed: 0
 ```
 
@@ -1202,7 +1202,7 @@ export async function initStashRepo(repoPath: string): Promise<void> {
 ## 🔒 Segurança e Privacidade
 
 ### **Repo Privado**
-- ✅ Repo `personal-stash` deve ser **privado** no GitHub
+- ✅ Repo `my-personal-stash` deve ser **privado** no GitHub
 - ✅ Apenas você tem acesso
 - ✅ Suporta SSH keys para autenticação
 
@@ -1306,14 +1306,14 @@ brew install gabemule/tap/personal-stash
 ### **Setup Inicial**
 
 ```bash
-# 1. Criar repo privado no GitHub
+# 1. Criar repo privado no GitHub (para os DADOS)
 # Vai em https://github.com/new
-# Nome: personal-stash
+# Nome: my-personal-stash
 # Privado: ✅
 # Cria
 
-# 2. Inicializar pstash
-pstash init --remote git@github.com:SEU-USER/personal-stash.git
+# 2. Inicializar pstash (aponta para o repo de dados)
+pstash init --remote git@github.com:SEU-USER/my-personal-stash.git
 
 # 3. Verificar config
 pstash config list
@@ -1351,16 +1351,14 @@ pstash sync
 
 ### **Para Implementar Agora**
 
-1. **Criar repo privado no GitHub**:
-   - Nome: `personal-stash`
+1. **Criar repo privado no GitHub** (para os DADOS):
+   - Nome: `my-personal-stash`
    - Privacidade: Privado
    - Não adicionar README/license (vazio)
 
-2. **Iniciar projeto CLI**:
+2. **O projeto CLI já existe** (`personal-stash-cli`):
    ```bash
-   mkdir personal-stash-cli
-   cd personal-stash-cli
-   npm init -y
+   cd ~/Documents/CodePlay/personal-stash-cli
    npm install commander zod chalk ora simple-git globby date-fns pretty-bytes tar nanoid micromatch @inquirer/prompts
    npm install -D @types/node @types/tar @types/micromatch typescript tsx tsup vitest eslint @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint-config-prettier prettier
    ```
@@ -1372,8 +1370,8 @@ pstash sync
 Enquanto a CLI não existe, você pode fazer manualmente:
 
 ```bash
-# 1. Clonar repo
-git clone git@github.com:gabemule/personal-stash.git ~/.pstash
+# 1. Clonar repo de dados
+git clone git@github.com:gabemule/my-personal-stash.git ~/.pstash
 
 # 2. Configurar line endings (cross-platform)
 cd ~/.pstash
