@@ -81,8 +81,7 @@ pstash pop 0 # restaura
 ### **Estrutura do Repo `personal-stash`**
 
 ```
-personal-stash/  (repo Git privado)
-├── .pstashrc                     # Config global
+personal-stash/  (repo Git privado — dados apenas, sem config)
 ├── README.md                     # Documentação
 ├── .gitignore
 ├── scena/                        # Projeto: scena
@@ -119,16 +118,21 @@ personal-stash/  (repo Git privado)
 
 > **ID Format**: `YYYY-MM-DD_HH-mm_XXXX` — timestamp + 4-char nanoid suffix para evitar colisões entre máquinas diferentes salvando no mesmo minuto.
 
+> **Config location**: O arquivo `.pstashrc` fica em `~/.pstashrc` (home dir do usuário), **não** dentro do repo. O repo contém apenas os projetos e stashes. Isso separa a configuração pessoal dos dados versionados.
+
 ---
 
 ## 📄 Schemas e Metadata
 
 ### **.pstashrc** (Config Global)
 
+> **Localização**: `~/.pstashrc` no home dir do usuário — **nunca** dentro do repo de dados.
+
 ```json
 {
   "version": "1.0.0",
   "remote": "git@github.com:gabemule/personal-stash.git",
+  "localPath": "~/.pstash",
   "autoSync": true,
   "projects": {
     "scena": {
@@ -502,7 +506,7 @@ pstash init --remote git@github.com:user/ps.git # Non-interactive
 
 # Options
 -r, --remote <url>        Git remote URL
---path <path>             Local path (default: ~/.personal-stash)
+--path <path>             Local path (default: ~/.pstash)
 
 # Output
 ✓ Cloned personal-stash repo
@@ -656,11 +660,13 @@ pstash clean --keep 10  # Mantém apenas 10 mais recentes por projeto
     "pretty-bytes": "latest",      // Size formatting
     "tar": "latest",               // Compression (cross-platform)
     "nanoid": "latest",            // Stash ID suffix (collision prevention)
+    "micromatch": "latest",        // Glob pattern matching (partial restore)
     "@inquirer/prompts": "latest"  // Interactive CLI prompts
   },
   "devDependencies": {
     "@types/node": "latest",       // Node types
     "@types/tar": "latest",        // Tar types
+    "@types/micromatch": "latest", // Micromatch types
     "typescript": "latest",        // TypeScript compiler
     "vitest": "latest",            // Testing
     "tsx": "latest",               // TS execution
@@ -775,9 +781,9 @@ personal-stash-cli/
 │   │   └── config.ts            # pstash config
 │   ├── core/
 │   │   ├── detector.ts          # Project detection (simple-git, cross-platform)
-│   │   ├── stasher.ts           # Create/restore stash
-│   │   ├── indexer.ts           # Manage metadata
-│   │   ├── compressor.ts        # File compression
+│   │   ├── stasher.ts           # Create/restore stash operations
+│   │   ├── indexer.ts           # Manage .project.json: stash counts, totalSize, updatedAt
+│   │   ├── compressor.ts        # File compression (tar.gz)
 │   │   └── git.ts               # Git operations wrapper (simple-git)
 │   ├── config/
 │   │   ├── loader.ts            # Load .pstashrc (os.homedir())
@@ -788,8 +794,7 @@ personal-stash-cli/
 │   │   ├── format.ts            # Output formatting
 │   │   ├── prompts.ts           # Interactive prompts (@inquirer/prompts)
 │   │   └── validation.ts        # Zod validation helpers
-│   ├── types.ts                 # TypeScript types
-│   └── schemas.ts               # Zod schemas
+│   └── schemas.ts               # Zod schemas (SSoT — all types derived here)
 └── tests/
     ├── commands/
     ├── core/
@@ -840,6 +845,7 @@ export type ProjectMetadata = z.infer<typeof ProjectMetadataSchema>
 export const GlobalConfigSchema = z.object({
   version: z.string(),
   remote: z.string().url(),
+  localPath: z.string().default(".pstash"),  // Relative to homedir() → ~/.pstash
   autoSync: z.boolean().default(true),
   projects: z.record(z.string(), z.object({
     aliases: z.array(z.string()).default([]),
@@ -1027,13 +1033,13 @@ export class Stasher {
     )
 
     // Determine files to restore
+    // Note: --files partial restore is a Phase 3 feature (micromatch)
+    // In Phase 1, all files are always restored
     let filesToRestore = metadata.files.map(f => f.name)
     if (options.files) {
-      const { minimatch } = await import("minimatch")
-      const patterns = options.files
-      filesToRestore = filesToRestore.filter(name =>
-        patterns.some(p => minimatch(name, p))
-      )
+      // Phase 3: micromatch for glob pattern filtering
+      const micromatch = (await import("micromatch")).default
+      filesToRestore = micromatch(filesToRestore, options.files)
     }
 
     // Copy files to destination
@@ -1355,8 +1361,8 @@ pstash sync
    mkdir personal-stash-cli
    cd personal-stash-cli
    npm init -y
-   npm install commander zod chalk ora simple-git globby date-fns pretty-bytes tar nanoid @inquirer/prompts
-   npm install -D @types/node @types/tar typescript tsx tsup vitest eslint @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint-config-prettier prettier
+   npm install commander zod chalk ora simple-git globby date-fns pretty-bytes tar nanoid micromatch @inquirer/prompts
+   npm install -D @types/node @types/tar @types/micromatch typescript tsx tsup vitest eslint @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint-config-prettier prettier
    ```
 
 3. **Seguir roadmap Phase 1 (MVP)**
@@ -1367,10 +1373,10 @@ Enquanto a CLI não existe, você pode fazer manualmente:
 
 ```bash
 # 1. Clonar repo
-git clone git@github.com:gabemule/personal-stash.git ~/personal-stash
+git clone git@github.com:gabemule/personal-stash.git ~/.pstash
 
 # 2. Configurar line endings (cross-platform)
-cd ~/personal-stash
+cd ~/.pstash
 git config core.autocrlf false
 git config core.eol lf
 
@@ -1393,7 +1399,7 @@ cat > .stash.json << 'EOF'
 EOF
 
 # 6. Commit e push
-cd ~/personal-stash
+cd ~/.pstash
 git add .
 git commit -m "stash(scena): planning docs"
 git push
