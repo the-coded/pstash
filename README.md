@@ -2,6 +2,10 @@
 
 **Git-backed personal file stash — persistent, project-categorized, multi-machine.**
 
+<p align="center">
+  <img src="./assets/pstash.png" alt="pstash — Git-backed Personal File Stash" width="800" />
+</p>
+
 Like `git stash` but for *any* file, on *any* project, synced to a private remote.
 
 ```
