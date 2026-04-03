@@ -14,8 +14,8 @@
 | Batch 1 | Fundação (setup do projeto) | ✅ Completo |
 | Batch 2 | Schemas + Config (Zod SSoT) | ✅ Completo |
 | Batch 3 | Core Engine | ✅ Completo |
-| Batch 4 | CLI + Comandos Phase 1 (MVP) | ⏳ Pendente |
-| Batch 5 | Phase 2 — Features Essenciais | ⏳ Pendente |
+| Batch 4 | CLI + Comandos Phase 1 (MVP) | ✅ Completo |
+| Batch 5 | Phase 2 — Features Essenciais | ✅ Completo |
 | Batch 6 | Phase 3 — Advanced Features | ⏳ Pendente |
 | Batch 7 | Phase 4 — Excellence | ⏳ Pendente |
 
@@ -70,18 +70,18 @@
 
 > **Objetivo**: CLI funcional com os 6 comandos essenciais do MVP.
 
-- [ ] 4.1 `bin/pstash.ts` — entry point com shebang (`#!/usr/bin/env node`)
-- [ ] 4.2 `src/cli.ts` — Commander program setup (version, description, error handler global)
-- [ ] 4.3 `src/commands/init.ts` — `pstash init` (clone repo, line endings, criar ~/.pstashrc)
-- [ ] 4.4 `src/commands/save.ts` — `pstash save` (detectar projeto, stasher.save, git commit/push)
-- [ ] 4.5 `src/commands/list.ts` — `pstash list` (ler stashes do projeto atual, --all, --json)
-- [ ] 4.6 `src/commands/pop.ts` — `pstash pop` (restore + delete, modo interativo sem ID)
-- [ ] 4.7 `src/commands/apply.ts` — `pstash apply` (restore sem delete, modo interativo)
-- [ ] 4.8 `src/commands/sync.ts` — `pstash sync` (git pull + push, --pull, --push)
-- [ ] 4.9 `src/utils/prompts.ts` — selectStash() com @inquirer/prompts
-- [ ] 4.10 Testar manualmente: `npx tsx bin/pstash.ts --help`
-- [ ] 4.11 Build: `npm run build` → verificar `dist/`
-- [ ] 4.12 **COMMIT**: `feat: CLI commands Phase 1 — init, save, list, pop, apply, sync`
+- [x] 4.1 `bin/pstash.ts` — entry point com shebang (`#!/usr/bin/env node`)
+- [x] 4.2 `src/cli.ts` — Commander program setup (version, description, error handler global)
+- [x] 4.3 `src/commands/init.ts` — `pstash init` (clone repo, line endings, criar ~/.pstashrc)
+- [x] 4.4 `src/commands/save.ts` — `pstash save` (detectar projeto, stasher.save, git commit/push)
+- [x] 4.5 `src/commands/list.ts` — `pstash list` (ler stashes do projeto atual, --all, --json)
+- [x] 4.6 `src/commands/pop.ts` — `pstash pop` (restore + delete, modo interativo sem ID)
+- [x] 4.7 `src/commands/apply.ts` — `pstash apply` (restore sem delete, modo interativo)
+- [x] 4.8 `src/commands/sync.ts` — `pstash sync` (git pull + push, --pull, --push)
+- [x] 4.9 `src/utils/prompts.ts` — selectStash() com @inquirer/prompts
+- [x] 4.10 Testar manualmente: `npx tsx bin/pstash.ts --help` ✅
+- [x] 4.11 Build: `npm run build` → ESM + DTS ✅
+- [x] 4.12 **COMMIT**: `feat: CLI commands Phase 1 — init, save, list, pop, apply, sync`
 
 ---
 
@@ -89,21 +89,21 @@
 
 > **Objetivo**: Tags, filtros, UX polish, e comandos extras de produtividade.
 
-- [ ] 5.1 Tags (`-t, --tag`) integradas no `save` + armazenadas em `.stash.json`
-- [ ] 5.2 `--rm` / `--keep` flags no `save` (remoção pós-stash)
-- [ ] 5.3 Config `removeAfterSave` respeitada no `save`
-- [ ] 5.4 `--tag` filter no `list`
-- [ ] 5.5 `--since` / `--until` filters no `list`
-- [ ] 5.6 `--project` filter no `list`
-- [ ] 5.7 `--preview` no `list` (3 primeiras linhas de cada arquivo)
-- [ ] 5.8 Auto-sync baseado em config (`autoSync`, `autoPush`)
-- [ ] 5.9 `src/commands/show.ts` — `pstash show` (metadata + lista arquivos, `--cat`, `--files`, interativo)
-- [ ] 5.10 `src/commands/drop.ts` — `pstash drop` (interativo + confirmação, `--all`, `--tag`)
-- [ ] 5.11 `src/commands/status.ts` — `pstash status` (info projeto atual: stashes, last sync, remote)
-- [ ] 5.12 Error handling robusto (config não encontrada, repo não clonado, arquivo não existe)
-- [ ] 5.13 Output polish com chalk + ora spinners em todos os comandos
-- [ ] 5.14 `.project.json` sendo criado/atualizado (indexer integrado no save/drop)
-- [ ] 5.15 **COMMIT**: `feat: Phase 2 — show, drop, status, tags, filters, UX polish`
+- [x] 5.1 Tags (`-t, --tag`) integradas no `save` + armazenadas em `.stash.json`
+- [x] 5.2 `--rm` / `--keep` flags no `save` (remoção pós-stash)
+- [x] 5.3 Config `removeAfterSave` respeitada no `save`
+- [x] 5.4 `--tag` filter no `list`
+- [x] 5.5 `--since` / `--until` filters no `list`
+- [x] 5.6 `--project` filter no `list`
+- [x] 5.7 `--preview` no `list` (3 primeiras linhas de cada arquivo)
+- [x] 5.8 Auto-sync baseado em config (`autoSync`, `autoPush`)
+- [x] 5.9 `src/commands/show.ts` — `pstash show` (metadata + lista arquivos, `--cat`, `--files`, interativo)
+- [x] 5.10 `src/commands/drop.ts` — `pstash drop` (interativo + confirmação, `--all`, `--tag`)
+- [x] 5.11 `src/commands/status.ts` — `pstash status` (info projeto atual: stashes, last sync, remote)
+- [x] 5.12 Error handling robusto (config não encontrada, repo não clonado, arquivo não existe)
+- [x] 5.13 Output polish com chalk + ora spinners em todos os comandos
+- [x] 5.14 `.project.json` sendo criado/atualizado (indexer integrado no save/drop)
+- [x] 5.15 **COMMIT**: `feat: Phase 2 — show, drop, status, tags, filters, UX polish`
 
 ---
 
@@ -155,4 +155,4 @@
 
 ---
 
-*Última atualização: 2026-04-03*
+*Última atualização: 2026-04-03 — Batch 5 concluído*
