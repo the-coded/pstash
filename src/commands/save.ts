@@ -36,6 +36,8 @@ export interface SaveCommandOptions {
   rm?: boolean
   /** Keep source files after saving (overrides config) */
   keep?: boolean
+  /** Disable compression (overrides config defaults.compression) */
+  noCompress?: boolean
 }
 
 /**
@@ -74,6 +76,8 @@ export async function saveCommand(
 
   let metadata
   try {
+    const shouldCompress = !options.noCompress && config.defaults.compression
+
     metadata = await stasher.save({
       project,
       message,
@@ -81,6 +85,7 @@ export async function saveCommand(
       tags: options.tag ?? [],
       branch,
       commit,
+      compress: shouldCompress,
     })
     spinner.succeed(
       chalk.green(`Saved ${metadata.files.length} file${metadata.files.length !== 1 ? "s" : ""}`) +

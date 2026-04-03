@@ -26,6 +26,9 @@ import { syncCommand } from "./commands/sync.js"
 import { showCommand } from "./commands/show.js"
 import { dropCommand } from "./commands/drop.js"
 import { statusCommand } from "./commands/status.js"
+import { cleanCommand } from "./commands/clean.js"
+import { diffCommand } from "./commands/diff.js"
+import { configCommand } from "./commands/config.js"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -107,6 +110,7 @@ async function createProgram(): Promise<Command> {
     .option("--no-push", "Skip pushing to remote after save")
     .option("--rm", "Remove source files after saving")
     .option("--keep", "Keep source files (overrides config removeAfterSave=true)")
+    .option("--no-compress", "Skip compression (overrides config defaults.compression)")
     .action(
       withErrorHandling((message: string, files: string[], opts) =>
         saveCommand(message, files, {
@@ -115,6 +119,7 @@ async function createProgram(): Promise<Command> {
           noPush: !opts.push as boolean,
           rm: opts.rm as boolean,
           keep: opts.keep as boolean,
+          noCompress: !opts.compress as boolean,
         }),
       ),
     )
@@ -230,6 +235,7 @@ async function createProgram(): Promise<Command> {
     .option("-t, --tag <tag>", "Drop all stashes with this tag")
     .option("-a, --all", "Drop ALL stashes in the project (requires double confirmation)")
     .option("--force", "Skip confirmation prompt")
+    .option("--dry-run", "Preview what would be dropped without deleting")
     .action(
       withErrorHandling((index: string | undefined, opts) =>
         dropCommand(index !== undefined ? parseInt(index, 10) : undefined, {
@@ -237,6 +243,7 @@ async function createProgram(): Promise<Command> {
           tag: opts.tag as string | undefined,
           all: opts.all as boolean,
           force: opts.force as boolean,
+          dryRun: opts.dryRun as boolean,
         }),
       ),
     )
@@ -252,6 +259,75 @@ async function createProgram(): Promise<Command> {
       withErrorHandling(opts =>
         statusCommand({
           all: opts.all as boolean,
+          json: opts.json as boolean,
+        }),
+      ),
+    )
+
+  // ─── pstash clean ─────────────────────────────────────────────────────────
+
+  program
+    .command("clean")
+    .description("Remove old or filtered stash entries")
+    .option("--older-than <timespec>", "Remove stashes older than this (e.g. 30d, 2w, 1m)")
+    .option("--keep <n>", "Keep only the N most recent stashes", parseInt)
+    .option("-t, --tag <tag>", "Remove only stashes with this tag")
+    .option("-a, --all", "Clean across all projects")
+    .option("-p, --project <name>", "Override auto-detected project name")
+    .option("--dry-run", "Preview what would be deleted without actually deleting")
+    .option("--force", "Skip confirmation prompt")
+    .action(
+      withErrorHandling(opts =>
+        cleanCommand({
+          olderThan: opts.olderThan as string | undefined,
+          keep: opts.keep as number | undefined,
+          tag: opts.tag as string | undefined,
+          all: opts.all as boolean,
+          project: opts.project as string | undefined,
+          dryRun: opts.dryRun as boolean,
+          force: opts.force as boolean,
+        }),
+      ),
+    )
+
+  // ─── pstash diff ──────────────────────────────────────────────────────────
+
+  program
+    .command("diff [indexA] [indexB]")
+    .description("Compare two stashes, or a stash against cwd (interactive if no index given)")
+    .option("-p, --project <name>", "Override auto-detected project name")
+    .option("--files <pattern>", "Limit diff to files matching this glob pattern")
+    .option("--stat", "Show only changed file names (no inline diff)")
+    .action(
+      withErrorHandling((indexA: string | undefined, indexB: string | undefined, opts) =>
+        diffCommand(
+          indexA !== undefined ? parseInt(indexA, 10) : undefined,
+          indexB !== undefined ? parseInt(indexB, 10) : undefined,
+          {
+            project: opts.project as string | undefined,
+            files: opts.files as string | undefined,
+            stat: opts.stat as boolean,
+          },
+        ),
+      ),
+    )
+
+  // ─── pstash config ────────────────────────────────────────────────────────
+
+  program
+    .command("config [key] [value]")
+    .description(
+      "View or set config values.\n" +
+        "  pstash config                  — list all\n" +
+        "  pstash config <key>            — get value\n" +
+        "  pstash config <key> <value>    — set value",
+    )
+    .option("-l, --list", "List all config values (default)")
+    .option("--json", "Output as JSON")
+    .action(
+      withErrorHandling((key: string | undefined, value: string | undefined, opts) =>
+        configCommand(key, value, {
+          list: opts.list as boolean,
           json: opts.json as boolean,
         }),
       ),

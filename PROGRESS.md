@@ -16,7 +16,7 @@
 | Batch 3 | Core Engine | ✅ Completo |
 | Batch 4 | CLI + Comandos Phase 1 (MVP) | ✅ Completo |
 | Batch 5 | Phase 2 — Features Essenciais | ✅ Completo |
-| Batch 6 | Phase 3 — Advanced Features | ⏳ Pendente |
+| Batch 6 | Phase 3 — Advanced Features | ✅ Completo |
 | Batch 7 | Phase 4 — Excellence | ⏳ Pendente |
 
 ---
@@ -111,18 +111,18 @@
 
 > **Objetivo**: Compressão, restore parcial, clean, diff, config CLI.
 
-- [ ] 6.1 `src/core/compressor.ts` — compress(dir) / decompress(tarball) via `tar` package
-- [ ] 6.2 Integrar compressão no `save` (`--no-compress` flag, config `compression`)
-- [ ] 6.3 Integrar decompressão no restore (pop/apply)
-- [ ] 6.4 Restaurar parcial com micromatch (`--files "*.md"` em pop/apply)
-- [ ] 6.5 `src/commands/clean.ts` — `pstash clean` (`--older-than`, `--keep`, `--tag`, `--dry-run`)
-- [ ] 6.6 `src/commands/diff.ts` — `pstash diff` (dois stashes ou stash vs pwd, interativo)
-- [ ] 6.7 `src/commands/config.ts` — `pstash config` (list, get, set chaves da config)
-- [ ] 6.8 Aliases de projetos (resolveAlias funcionando end-to-end)
-- [ ] 6.9 `--dry-run` nos comandos destrutivos (drop, clean)
-- [ ] 6.10 `--json` output em todos os comandos (list, show, status)
-- [ ] 6.11 `--dest` option no pop/apply (restaurar para pasta específica)
-- [ ] 6.12 **COMMIT**: `feat: Phase 3 — compression, partial restore, clean, diff, config cmd`
+- [x] 6.1 `src/core/compressor.ts` — compress(dir) / decompress(tarball) via `tar` package
+- [x] 6.2 Integrar compressão no `save` (`--no-compress` flag, config `compression`)
+- [x] 6.3 Integrar decompressão no restore (pop/apply) — `Stasher.restoreCompressed()` com temp dir para filtros
+- [x] 6.4 Restaurar parcial com micromatch (`--files "*.md"` em pop/apply) — suporte comprimido e não-comprimido
+- [x] 6.5 `src/commands/clean.ts` — `pstash clean` (`--older-than`, `--keep`, `--tag`, `--dry-run`, `--all`)
+- [x] 6.6 `src/commands/diff.ts` — `pstash diff` (LCS diff built-in, dois stashes ou stash vs pwd, interativo)
+- [x] 6.7 `src/commands/config.ts` — `pstash config` (list, get, set com dot-notation)
+- [x] 6.8 Aliases de projetos (resolveAlias já implementado no Batch 3 via detector.ts)
+- [x] 6.9 `--dry-run` nos comandos destrutivos (drop, clean)
+- [x] 6.10 `--json` output em todos os comandos (list, show, status, config, diff)
+- [x] 6.11 `--dest` option no pop/apply (já implementado no Batch 4)
+- [x] 6.12 **COMMIT**: `feat: Phase 3 — compression, partial restore, clean, diff, config cmd`
 
 ---
 
@@ -155,4 +155,4 @@
 
 ---
 
-*Última atualização: 2026-04-03 — Batch 5 concluído*
+*Última atualização: 2026-04-03 — Batch 6 concluído*

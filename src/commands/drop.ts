@@ -5,6 +5,7 @@
  *
  * Supports interactive selection, index-based deletion, tag-based bulk delete,
  * and full project wipe. Always asks for confirmation unless `--force` is set.
+ * Use `--dry-run` to preview what would be dropped without actually deleting.
  *
  * @example
  * // Interactive selection
@@ -12,6 +13,9 @@
  *
  * // Drop specific stash by index
  * pstash drop 0
+ *
+ * // Preview what would be dropped
+ * pstash drop --tag wip --dry-run
  *
  * // Drop all stashes tagged "wip"
  * pstash drop --tag wip
@@ -43,6 +47,8 @@ export interface DropCommandOptions {
   all?: boolean
   /** Skip confirmation prompt */
   force?: boolean
+  /** Preview what would be dropped without actually deleting */
+  dryRun?: boolean
 }
 
 /**
@@ -104,12 +110,23 @@ export async function dropCommand(
 
   // Show what will be dropped
   console.log()
-  console.log(chalk.bold.red(`  About to drop ${stashesToDrop.length} stash${stashesToDrop.length !== 1 ? "es" : ""} from ${chalk.white(project)}:`))
+  const dryLabel = options.dryRun ? chalk.yellow(" [DRY RUN]") : ""
+  console.log(
+    chalk.bold.red(
+      `  About to drop ${stashesToDrop.length} stash${stashesToDrop.length !== 1 ? "es" : ""} from ${chalk.white(project)}:`,
+    ) + dryLabel,
+  )
   console.log()
   for (const [i, stash] of stashesToDrop.entries()) {
     console.log(`  ${formatStashLine(stash, i)}`)
   }
   console.log()
+
+  // Dry run: stop here
+  if (options.dryRun) {
+    console.log(chalk.yellow("  Dry run — nothing was deleted.\n"))
+    return
+  }
 
   // Confirmation
   if (!options.force) {
@@ -141,7 +158,9 @@ export async function dropCommand(
   }
 
   // Delete each stash
-  const deleteSpinner = ora(`Dropping ${stashesToDrop.length} stash${stashesToDrop.length !== 1 ? "es" : ""}...`).start()
+  const deleteSpinner = ora(
+    `Dropping ${stashesToDrop.length} stash${stashesToDrop.length !== 1 ? "es" : ""}...`,
+  ).start()
   let dropped = 0
 
   for (const stash of stashesToDrop) {

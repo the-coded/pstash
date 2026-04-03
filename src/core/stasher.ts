@@ -1,12 +1,22 @@
 /**
- * src/core/stasher.ts
+ * @module core/stasher
  *
- * Core stash operations: save files to and restore from the stash repo.
- * Uses SHA-256 hashing, nanoid collision-safe IDs, and globby for patterns.
+ * Core stash operations: save files to and restore from the stash data repository.
+ *
+ * - Save: resolves glob patterns via `globby`, computes SHA-256 hashes, generates
+ *   unique IDs (`YYYY-MM-DD_HH-mm_XXXX`), and optionally compresses via `tar`.
+ * - Restore: copies files back to the destination directory, with optional
+ *   micromatch partial-restore and tar.gz decompression support.
+ *
+ * @example
+ * const stasher = new Stasher("/home/user/.pstash")
+ * const meta = await stasher.save({ project: "my-app", message: "WIP", files: ["*.md"] })
+ * await stasher.restore({ project: "my-app", stashId: meta.id, dest: process.cwd() })
  */
 
-import { copyFile, mkdir, readFile, readdir, rm, stat } from "node:fs/promises"
+import { copyFile, mkdir, mkdtemp, readFile, readdir, rm, stat } from "node:fs/promises"
 import { join, basename } from "node:path"
+import { tmpdir } from "node:os"
 import { createHash } from "node:crypto"
 import { userInfo, hostname } from "node:os"
 import { nanoid } from "nanoid"
@@ -15,20 +25,48 @@ import { globby } from "globby"
 import { StashMetadataSchema } from "../schemas.js"
 import type { StashMetadata } from "../schemas.js"
 import { writeJson, exists } from "../utils/fs.js"
+import { compress, decompress } from "./compressor.js"
 
 export class Stasher {
   private stashRepoPath: string
 
+  /**
+   * @param stashRepoPath - Absolute path to the local stash data repository (e.g. `~/.pstash`)
+   */
   constructor(stashRepoPath: string) {
     this.stashRepoPath = stashRepoPath
   }
 
   /**
-   * Saves files to the stash repo and returns the stash metadata.
+   * Saves files matching the given patterns to the stash repository.
    *
-   * - Resolves glob patterns via globby (cross-platform)
-   * - Generates SHA-256 hashes for integrity checking
-   * - Creates unique ID: YYYY-MM-DD_HH-mm_XXXX (timestamp + 4-char nanoid)
+   * Steps:
+   * 1. Resolve glob patterns via `globby` (cross-platform)
+   * 2. Copy files to a new stash directory
+   * 3. Compute SHA-256 integrity hashes (first 12 hex chars)
+   * 4. Optionally compress into `stash.tar.gz` and remove individual files
+   * 5. Write `.stash.json` metadata
+   *
+   * @param options.project - Project name (directory name in stash repo)
+   * @param options.message - Human-readable description
+   * @param options.files - Glob patterns relative to `process.cwd()`
+   * @param options.tags - User-defined tags for filtering
+   * @param options.branch - Git branch at save time
+   * @param options.commit - Git commit hash at save time
+   * @param options.compress - If true, compress files into `stash.tar.gz` after copying
+   * @returns Validated stash metadata object
+   *
+   * @throws {Error} If no files match the provided patterns
+   * @throws {Error} If compression fails
+   *
+   * @example
+   * const meta = await stasher.save({
+   *   project: "my-app",
+   *   message: "planning docs",
+   *   files: ["*.md", "docs/*.md"],
+   *   tags: ["docs"],
+   *   compress: true
+   * })
    */
   async save(options: {
     project: string
@@ -37,6 +75,7 @@ export class Stasher {
     tags?: string[]
     branch?: string
     commit?: string
+    compress?: boolean
   }): Promise<StashMetadata> {
     const timestamp = new Date()
     // Timestamp + 4-char suffix prevents collision between machines saving in the same minute
@@ -61,6 +100,7 @@ export class Stasher {
 
     // Copy files and generate SHA-256 hashes
     const fileMetadata: StashMetadata["files"] = []
+    const copiedFileNames: string[] = []
     let totalSize = 0
 
     for (const filePath of resolvedFiles) {
@@ -78,7 +118,14 @@ export class Stasher {
         size: fileStats.size,
         hash,
       })
+      copiedFileNames.push(fileName)
       totalSize += fileStats.size
+    }
+
+    // Compress if requested (Phase 3 feature)
+    const isCompressed = options.compress === true
+    if (isCompressed) {
+      await compress(stashDir, copiedFileNames)
     }
 
     // Create and validate metadata
@@ -94,7 +141,7 @@ export class Stasher {
       user: `${userInfo().username}@${hostname()}`,
       files: fileMetadata,
       totalSize,
-      compressed: false,
+      compressed: isCompressed,
     })
 
     await writeJson(join(stashDir, ".stash.json"), metadata)
@@ -104,8 +151,29 @@ export class Stasher {
 
   /**
    * Restores files from a stash to the destination directory.
-   * Phase 1: Restores all files.
-   * Phase 3: Partial restore via micromatch (if files pattern is provided).
+   *
+   * - If the stash is compressed, decompresses `stash.tar.gz` to the destination.
+   * - If `filesPattern` is provided, uses `micromatch` for partial restore.
+   * - For compressed stashes with a `filesPattern`, extracts to a temp dir first,
+   *   then copies only matching files to the destination.
+   *
+   * @param options.project - Project name
+   * @param options.stashId - Stash ID (e.g. "2026-03-12_01-05_k7x2")
+   * @param options.dest - Destination directory for restored files
+   * @param options.filesPattern - Glob pattern for partial restore (e.g. "*.md")
+   * @param options.force - If true, overwrite existing destination files
+   * @returns Validated stash metadata object
+   *
+   * @throws {Error} If the stash directory or metadata is not found
+   * @throws {Error} If destination files already exist and `force` is false
+   * @throws {Error} If no files match the `filesPattern`
+   *
+   * @example
+   * // Full restore
+   * await stasher.restore({ project: "my-app", stashId: "2026-03-12_01-05_k7x2", dest: "/home/user/my-app" })
+   *
+   * // Partial restore (markdown only)
+   * await stasher.restore({ project: "my-app", stashId: "...", dest: "/home/user/my-app", filesPattern: "*.md" })
    */
   async restore(options: {
     project: string
@@ -124,38 +192,113 @@ export class Stasher {
     const raw = await readFile(metadataPath, "utf-8")
     const metadata = StashMetadataSchema.parse(JSON.parse(raw))
 
-    // Determine which files to restore
-    let filesToRestore = metadata.files.map(f => f.name)
-
-    if (options.filesPattern) {
-      // Phase 3: micromatch for partial restore
-      const { default: micromatch } = await import("micromatch")
-      filesToRestore = micromatch(filesToRestore, options.filesPattern)
-
-      if (filesToRestore.length === 0) {
-        throw new Error(`No files matched pattern: ${options.filesPattern}`)
-      }
-    }
-
-    // Copy files to destination
-    for (const fileName of filesToRestore) {
-      const src = join(stashDir, fileName)
-      const dest = join(options.dest, fileName)
-
-      if (!options.force && (await exists(dest))) {
-        throw new Error(
-          `File already exists: ${dest}\n` + `Use --force to overwrite.`,
-        )
-      }
-
-      await copyFile(src, dest)
+    if (metadata.compressed) {
+      await this.restoreCompressed(stashDir, metadata, options)
+    } else {
+      await this.restoreUncompressed(stashDir, metadata, options)
     }
 
     return metadata
   }
 
   /**
-   * Deletes a stash directory from the stash repo.
+   * Restores an uncompressed stash by copying individual files.
+   *
+   * @param stashDir - Absolute path to the stash directory
+   * @param metadata - Validated stash metadata
+   * @param options - Restore options (dest, filesPattern, force)
+   */
+  private async restoreUncompressed(
+    stashDir: string,
+    metadata: StashMetadata,
+    options: { dest: string; filesPattern?: string; force?: boolean },
+  ): Promise<void> {
+    let filesToRestore = metadata.files.map(f => f.name)
+
+    if (options.filesPattern) {
+      const { default: micromatch } = await import("micromatch")
+      filesToRestore = micromatch(filesToRestore, options.filesPattern)
+      if (filesToRestore.length === 0) {
+        throw new Error(`No files matched pattern: ${options.filesPattern}`)
+      }
+    }
+
+    for (const fileName of filesToRestore) {
+      const src = join(stashDir, fileName)
+      const dest = join(options.dest, fileName)
+
+      if (!options.force && (await exists(dest))) {
+        throw new Error(`File already exists: ${dest}\nUse --force to overwrite.`)
+      }
+
+      await copyFile(src, dest)
+    }
+  }
+
+  /**
+   * Restores a compressed stash by decompressing the tar.gz archive.
+   * If `filesPattern` is provided, extracts to a temp dir and copies only matching files.
+   *
+   * @param stashDir - Absolute path to the stash directory
+   * @param metadata - Validated stash metadata
+   * @param options - Restore options (dest, filesPattern, force)
+   */
+  private async restoreCompressed(
+    stashDir: string,
+    metadata: StashMetadata,
+    options: { dest: string; filesPattern?: string; force?: boolean },
+  ): Promise<void> {
+    if (options.filesPattern) {
+      // Partial restore from compressed stash: extract to temp dir, then filter
+      const tempDir = await mkdtemp(join(tmpdir(), "pstash-"))
+      try {
+        await decompress(stashDir, tempDir)
+
+        const { default: micromatch } = await import("micromatch")
+        const allFileNames = metadata.files.map(f => f.name)
+        const matching = micromatch(allFileNames, options.filesPattern)
+
+        if (matching.length === 0) {
+          throw new Error(`No files matched pattern: ${options.filesPattern}`)
+        }
+
+        for (const fileName of matching) {
+          const src = join(tempDir, fileName)
+          const dest = join(options.dest, fileName)
+
+          if (!options.force && (await exists(dest))) {
+            throw new Error(`File already exists: ${dest}\nUse --force to overwrite.`)
+          }
+
+          if (await exists(src)) {
+            await copyFile(src, dest)
+          }
+        }
+      } finally {
+        await rm(tempDir, { recursive: true, force: true })
+      }
+    } else {
+      // Full restore: check for conflicts first, then decompress
+      if (!options.force) {
+        for (const file of metadata.files) {
+          const dest = join(options.dest, file.name)
+          if (await exists(dest)) {
+            throw new Error(`File already exists: ${dest}\nUse --force to overwrite.`)
+          }
+        }
+      }
+      await decompress(stashDir, options.dest)
+    }
+  }
+
+  /**
+   * Deletes a stash directory from the stash repository.
+   *
+   * @param project - Project name
+   * @param stashId - Stash ID to delete
+   *
+   * @example
+   * await stasher.delete("my-app", "2026-03-12_01-05_k7x2")
    */
   async delete(project: string, stashId: string): Promise<void> {
     const stashDir = join(this.stashRepoPath, project, stashId)
@@ -164,6 +307,13 @@ export class Stasher {
 
   /**
    * Lists all stash IDs for a project, sorted newest first.
+   *
+   * @param project - Project name
+   * @returns Array of stash IDs (newest first)
+   *
+   * @example
+   * const ids = await stasher.listIds("my-app")
+   * // ["2026-03-12_01-05_k7x2", "2026-03-10_22-30_a1b2"]
    */
   async listIds(project: string): Promise<string[]> {
     const projectDir = join(this.stashRepoPath, project)
@@ -181,7 +331,13 @@ export class Stasher {
   }
 
   /**
-   * Loads stash metadata for a specific stash.
+   * Loads stash metadata for a specific stash entry.
+   *
+   * @param project - Project name
+   * @param stashId - Stash ID
+   * @returns Validated `StashMetadata` object
+   *
+   * @throws {Error} If the `.stash.json` metadata file is not found
    */
   async loadMetadata(project: string, stashId: string): Promise<StashMetadata> {
     const metadataPath = join(this.stashRepoPath, project, stashId, ".stash.json")
@@ -196,6 +352,10 @@ export class Stasher {
 
   /**
    * Loads all stash metadata for a project, sorted newest first.
+   * Silently skips corrupted or missing stash entries.
+   *
+   * @param project - Project name
+   * @returns Array of validated `StashMetadata` objects (newest first)
    */
   async listMetadata(project: string): Promise<StashMetadata[]> {
     const ids = await this.listIds(project)
@@ -214,7 +374,9 @@ export class Stasher {
   }
 
   /**
-   * Lists all projects in the stash repo.
+   * Lists all project names in the stash repository, sorted alphabetically.
+   *
+   * @returns Array of project directory names
    */
   async listProjects(): Promise<string[]> {
     if (!(await exists(this.stashRepoPath))) return []
