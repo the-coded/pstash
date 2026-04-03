@@ -13,7 +13,7 @@
 |-------|-----------|--------|
 | Batch 1 | Fundação (setup do projeto) | ✅ Completo |
 | Batch 2 | Schemas + Config (Zod SSoT) | ✅ Completo |
-| Batch 3 | Core Engine | ⏳ Pendente |
+| Batch 3 | Core Engine | ✅ Completo |
 | Batch 4 | CLI + Comandos Phase 1 (MVP) | ⏳ Pendente |
 | Batch 5 | Phase 2 — Features Essenciais | ⏳ Pendente |
 | Batch 6 | Phase 3 — Advanced Features | ⏳ Pendente |
@@ -55,14 +55,14 @@
 
 > **Objetivo**: Motor de operações (detector, git, stasher, indexer, utils).
 
-- [ ] 3.1 `src/core/detector.ts` — ProjectDetector (simple-git remote + fallback basename, resolveAlias)
-- [ ] 3.2 `src/core/git.ts` — GitManager (clone, commit, push, pull, initLineEndings via simple-git)
-- [ ] 3.3 `src/core/stasher.ts` — Stasher.save() + Stasher.restore() (SHA-256 via node:crypto, nanoid suffix, globby)
-- [ ] 3.4 `src/core/indexer.ts` — Indexer (ler/escrever `.project.json`: stashCount, totalSize, updatedAt)
-- [ ] 3.5 `src/utils/fs.ts` — fs helpers (ensureDir, readJson, writeJson, removeFiles)
-- [ ] 3.6 `src/utils/time.ts` — timespec parser ("7d", "2w", "1m", ISO date)
-- [ ] 3.7 `src/utils/format.ts` — formatters (formatStashLine, formatSize com pretty-bytes, formatDate)
-- [ ] 3.8 **COMMIT**: `feat: core engine — detector, git, stasher, indexer, utils`
+- [x] 3.1 `src/core/detector.ts` — ProjectDetector (simple-git remote + fallback basename, resolveAlias)
+- [x] 3.2 `src/core/git.ts` — GitManager (clone, commit, push, pull, initLineEndings via simple-git)
+- [x] 3.3 `src/core/stasher.ts` — Stasher.save() + Stasher.restore() (SHA-256 via node:crypto, nanoid suffix, globby)
+- [x] 3.4 `src/core/indexer.ts` — Indexer (ler/escrever `.project.json`: stashCount, totalSize, updatedAt)
+- [x] 3.5 `src/utils/fs.ts` — fs helpers (ensureDir, readJson, writeJson, removeFiles)
+- [x] 3.6 `src/utils/time.ts` — timespec parser ("7d", "2w", "1m", ISO date)
+- [x] 3.7 `src/utils/format.ts` — formatters (formatStashLine, formatSize com pretty-bytes, formatDate)
+- [x] 3.8 **COMMIT**: `feat: core engine — detector, git, stasher, indexer, utils`
 
 ---
 
