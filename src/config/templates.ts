@@ -18,7 +18,6 @@ export function createDefaultConfig(remote: string, localPath = "~/.pstash"): Gl
     projects: {},
     defaults: {
       keepOnPop: false,
-      autoPush: true,
       compression: true,
       removeAfterSave: false,
     },

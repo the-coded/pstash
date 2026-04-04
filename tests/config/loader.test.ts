@@ -24,7 +24,6 @@ const validConfig = {
   projects: {},
   defaults: {
     keepOnPop: false,
-    autoPush: true,
     compression: true,
     removeAfterSave: false,
   },
@@ -85,7 +84,6 @@ describe("loadConfig", () => {
     vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify(validConfig))
     const config = await loadConfig()
     expect(config.remote).toBe(validConfig.remote)
-    expect(config.defaults.autoPush).toBe(true)
     expect(config.defaults.compression).toBe(true)
   })
 
@@ -95,7 +93,6 @@ describe("loadConfig", () => {
       remote: "https://github.com/user/repo.git",
       defaults: {
         keepOnPop: false,
-        autoPush: true,
         compression: true,
         removeAfterSave: false,
       },

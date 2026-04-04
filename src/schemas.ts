@@ -191,8 +191,9 @@ export const GlobalConfigSchema = z.object({
    */
   localPath: z.string().default("~/.pstash"),
   /**
-   * Whether to auto pull/push on save and restore operations.
-   * Can be overridden per-operation with `--no-push`.
+   * Whether to automatically pull before and push after write operations
+   * (save, pop, drop, clean) and pull before read operations (list).
+   * Can be overridden per-operation with `--no-sync`.
    */
   autoSync: z.boolean().default(true),
   /**
@@ -204,8 +205,6 @@ export const GlobalConfigSchema = z.object({
   defaults: z.object({
     /** If true, `pstash pop` keeps the stash after restoring (like apply) */
     keepOnPop: z.boolean().default(false),
-    /** If true, automatically push after save */
-    autoPush: z.boolean().default(true),
     /** If true, compress stash files as tar.gz (Phase 3) */
     compression: z.boolean().default(true),
     /**

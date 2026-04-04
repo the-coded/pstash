@@ -55,6 +55,19 @@ export async function popCommand(
 ): Promise<void> {
   const config = await loadConfig()
   const repoPath = resolveLocalPath(config.localPath)
+  const git = new GitManager(repoPath)
+
+  // Auto pull before restoring (ensures we have the latest stashes from other machines)
+  if (config.autoSync) {
+    const pullSpinner = ora("Pulling latest changes...").start()
+    try {
+      await git.pull()
+      pullSpinner.succeed(chalk.green("Pulled latest changes"))
+    } catch {
+      pullSpinner.warn(chalk.dim("Pull failed — working with local stash"))
+    }
+  }
+
   const stasher = new Stasher(repoPath)
 
   // Detect project
@@ -119,8 +132,7 @@ export async function popCommand(
   const indexer = new Indexer(repoPath)
   await indexer.onDelete(project, remainingStashes)
 
-  // Git commit + push
-  const git = new GitManager(repoPath)
+  // Git commit
   const commitSpinner = ora("Committing deletion...").start()
   try {
     await git.commitAll(`drop(${project}): ${selectedStash.message}`)
@@ -129,7 +141,8 @@ export async function popCommand(
     commitSpinner.warn(chalk.dim("Nothing to commit"))
   }
 
-  if (config.defaults.autoPush) {
+  // Auto push after popping (unless autoSync is off)
+  if (config.autoSync) {
     const pushSpinner = ora("Pushing...").start()
     try {
       await git.push()

@@ -107,7 +107,7 @@ async function createProgram(): Promise<Command> {
     .description("Stash files with a message")
     .option("-t, --tag <tag>", "Add tag (repeatable)", (val: string, prev: string[]) => [...prev, val], [] as string[])
     .option("-p, --project <name>", "Override auto-detected project name")
-    .option("--no-push", "Skip pushing to remote after save")
+    .option("--no-sync", "Skip auto pull+push for this operation")
     .option("--rm", "Remove source files after saving")
     .option("--keep", "Keep source files (overrides config removeAfterSave=true)")
     .option("--no-compress", "Skip compression (overrides config defaults.compression)")
@@ -116,7 +116,7 @@ async function createProgram(): Promise<Command> {
         saveCommand(message, files, {
           tag: opts.tag as string[],
           project: opts.project as string | undefined,
-          noPush: !opts.push as boolean,
+          noSync: !opts.sync as boolean,
           rm: opts.rm as boolean,
           keep: opts.keep as boolean,
           noCompress: !opts.compress as boolean,

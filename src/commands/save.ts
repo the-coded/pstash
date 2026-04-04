@@ -12,6 +12,9 @@
  *
  * // Remove source files after saving
  * pstash save --rm "archived config" *.json
+ *
+ * // Skip auto pull+push for this operation
+ * pstash save --no-sync "quick local save" *.md
  */
 
 import chalk from "chalk"
@@ -30,8 +33,8 @@ export interface SaveCommandOptions {
   tag?: string[]
   /** Override auto-detected project name */
   project?: string
-  /** Skip pushing to remote after save */
-  noPush?: boolean
+  /** Skip auto pull+push for this operation (overrides config.autoSync) */
+  noSync?: boolean
   /** Remove source files after saving (overrides config) */
   rm?: boolean
   /** Keep source files after saving (overrides config) */
@@ -49,7 +52,7 @@ export interface SaveCommandOptions {
  *
  * @throws {Error} If no files match the provided patterns
  * @throws {Error} If config is not initialized (`~/.pstashrc` missing)
- * @throws {Error} If git push fails and `--no-push` is not set
+ * @throws {Error} If git push fails and `--no-sync` is not set
  */
 export async function saveCommand(
   message: string,
@@ -58,6 +61,18 @@ export async function saveCommand(
 ): Promise<void> {
   const config = await loadConfig()
   const repoPath = resolveLocalPath(config.localPath)
+  const git = new GitManager(repoPath)
+
+  // Auto pull before saving (ensures we have the latest stashes from other machines)
+  if (config.autoSync && !options.noSync) {
+    const pullSpinner = ora("Pulling latest changes...").start()
+    try {
+      await git.pull()
+      pullSpinner.succeed(chalk.green("Pulled latest changes"))
+    } catch {
+      pullSpinner.warn(chalk.dim("Pull failed — saving to local stash"))
+    }
+  }
 
   // Detect project name (git remote → basename fallback)
   const detector = new ProjectDetector()
@@ -102,7 +117,6 @@ export async function saveCommand(
 
   // Git commit
   const gitSpinner = ora("Committing...").start()
-  const git = new GitManager(repoPath)
   try {
     await git.commitAll(`stash(${project}): ${message}`)
     gitSpinner.succeed(chalk.green("Committed"))
@@ -111,15 +125,14 @@ export async function saveCommand(
     throw err
   }
 
-  // Push (unless --no-push or autoSync/autoPush is off)
-  const shouldPush = !options.noPush && config.defaults.autoPush
-  if (shouldPush) {
+  // Auto push after saving (unless --no-sync or autoSync is off)
+  if (config.autoSync && !options.noSync) {
     const pushSpinner = ora("Pushing to remote...").start()
     try {
       await git.push()
       pushSpinner.succeed(chalk.green("Pushed to remote"))
-    } catch (err) {
-      pushSpinner.fail(chalk.yellow("Push failed (run pstash sync to retry)"))
+    } catch {
+      pushSpinner.warn(chalk.yellow("Push failed (run pstash sync to retry)"))
       // Don't throw — stash is saved locally
     }
   }

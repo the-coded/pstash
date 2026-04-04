@@ -67,6 +67,19 @@ export async function dropCommand(
 ): Promise<void> {
   const config = await loadConfig()
   const repoPath = resolveLocalPath(config.localPath)
+  const git = new GitManager(repoPath)
+
+  // Auto pull before dropping (ensures we're working with the latest state)
+  if (config.autoSync) {
+    const pullSpinner = ora("Pulling latest changes...").start()
+    try {
+      await git.pull()
+      pullSpinner.succeed(chalk.green("Pulled latest changes"))
+    } catch {
+      pullSpinner.warn(chalk.dim("Pull failed — working with local stash"))
+    }
+  }
+
   const stasher = new Stasher(repoPath)
 
   // Detect project
@@ -183,8 +196,7 @@ export async function dropCommand(
   const indexer = new Indexer(repoPath)
   await indexer.onDelete(project, remainingStashes)
 
-  // Git commit + push
-  const git = new GitManager(repoPath)
+  // Git commit
   const commitMsg =
     stashesToDrop.length === 1
       ? `drop(${project}): ${stashesToDrop[0]!.message}`
@@ -198,7 +210,8 @@ export async function dropCommand(
     commitSpinner.warn(chalk.dim("Nothing to commit"))
   }
 
-  if (config.defaults.autoPush) {
+  // Auto push after dropping (unless autoSync is off)
+  if (config.autoSync) {
     const pushSpinner = ora("Pushing...").start()
     try {
       await git.push()

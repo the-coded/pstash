@@ -70,6 +70,19 @@ export async function cleanCommand(options: CleanCommandOptions): Promise<void> 
 
   const config = await loadConfig()
   const repoPath = resolveLocalPath(config.localPath)
+  const git = new GitManager(repoPath)
+
+  // Auto pull before cleaning (ensures we have the latest state from other machines)
+  if (config.autoSync) {
+    const pullSpinner = ora("Pulling latest changes...").start()
+    try {
+      await git.pull()
+      pullSpinner.succeed(chalk.green("Pulled latest changes"))
+    } catch {
+      pullSpinner.warn(chalk.dim("Pull failed — working with local stash"))
+    }
+  }
+
   const stasher = new Stasher(repoPath)
 
   // Determine which projects to clean
@@ -199,8 +212,7 @@ export async function cleanCommand(options: CleanCommandOptions): Promise<void> 
     await indexer.onDelete(project, remaining)
   }
 
-  // Git commit + push
-  const git = new GitManager(repoPath)
+  // Git commit
   const projectList = [...affectedProjects].join(", ")
   const commitMsg =
     removed === 1
@@ -215,7 +227,8 @@ export async function cleanCommand(options: CleanCommandOptions): Promise<void> 
     commitSpinner.warn(chalk.dim("Nothing to commit"))
   }
 
-  if (config.defaults.autoPush) {
+  // Auto push after cleaning (unless autoSync is off)
+  if (config.autoSync) {
     const pushSpinner = ora("Pushing...").start()
     try {
       await git.push()

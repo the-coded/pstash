@@ -20,9 +20,11 @@
 import { readFile } from "node:fs/promises"
 import { join } from "node:path"
 import chalk from "chalk"
+import ora from "ora"
 import { loadConfig, resolveLocalPath } from "../config/loader.js"
 import { ProjectDetector } from "../core/detector.js"
 import { Stasher } from "../core/stasher.js"
+import { GitManager } from "../core/git.js"
 import { exists } from "../utils/fs.js"
 import { formatStashLine } from "../utils/format.js"
 import { parseTimespec, isAfter, isBefore } from "../utils/time.js"
@@ -55,6 +57,19 @@ export interface ListCommandOptions {
 export async function listCommand(options: ListCommandOptions): Promise<void> {
   const config = await loadConfig()
   const repoPath = resolveLocalPath(config.localPath)
+  const git = new GitManager(repoPath)
+
+  // Auto pull before listing (ensures fresh data from other machines)
+  if (config.autoSync) {
+    const pullSpinner = ora("Syncing...").start()
+    try {
+      await git.pull()
+      pullSpinner.succeed(chalk.green("Synced"))
+    } catch {
+      pullSpinner.warn(chalk.dim("Sync failed — showing local data"))
+    }
+  }
+
   const stasher = new Stasher(repoPath)
 
   // Determine which projects to list
