@@ -21,6 +21,7 @@ import chalk from "chalk"
 import ora from "ora"
 import { loadConfig, resolveLocalPath } from "../config/loader.js"
 import { ProjectDetector } from "../core/detector.js"
+import { GitManager } from "../core/git.js"
 import { Stasher } from "../core/stasher.js"
 import { selectStash } from "../utils/prompts.js"
 import { formatStashDetails } from "../utils/format.js"
@@ -53,6 +54,19 @@ export async function applyCommand(
 ): Promise<void> {
   const config = await loadConfig()
   const repoPath = resolveLocalPath(config.localPath)
+
+  // Auto-pull before applying (ensures we have latest stashes from other machines)
+  if (config.autoSync) {
+    const git = new GitManager(repoPath)
+    const pullSpinner = ora("Pulling latest changes...").start()
+    try {
+      await git.pull()
+      pullSpinner.succeed(chalk.green("Pulled latest changes"))
+    } catch {
+      pullSpinner.warn(chalk.dim("Pull failed — working with local stash"))
+    }
+  }
+
   const stasher = new Stasher(repoPath)
 
   // Detect project

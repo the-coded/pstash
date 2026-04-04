@@ -156,7 +156,7 @@ async function createProgram(): Promise<Command> {
     .command("pop [index]")
     .description("Restore stash files and delete the stash (interactive if no index given)")
     .option("-d, --dest <path>", "Destination directory (default: current directory)")
-    .option("--files <pattern>", "Restore only files matching glob pattern")
+    .option("-f, --files <pattern>", "Restore only files matching glob pattern")
     .option("-p, --project <name>", "Override auto-detected project name")
     .option("--force", "Overwrite existing files")
     .action(
@@ -176,7 +176,7 @@ async function createProgram(): Promise<Command> {
     .command("apply [index]")
     .description("Restore stash files WITHOUT deleting the stash (interactive if no index given)")
     .option("-d, --dest <path>", "Destination directory (default: current directory)")
-    .option("--files <pattern>", "Restore only files matching glob pattern")
+    .option("-f, --files <pattern>", "Restore only files matching glob pattern")
     .option("-p, --project <name>", "Override auto-detected project name")
     .option("--force", "Overwrite existing files")
     .action(
@@ -212,15 +212,15 @@ async function createProgram(): Promise<Command> {
     .command("show [index]")
     .description("Show details of a stash entry (interactive if no index given)")
     .option("-p, --project <name>", "Override auto-detected project name")
-    .option("--files", "Show file list only (no metadata)")
-    .option("--cat", "Print file contents")
+    .option("-f, --files", "Show file list only (no metadata)")
+    .option("-c, --cat [pattern]", "Print file contents (optional glob to filter files)")
     .option("--json", "Output as JSON")
     .action(
       withErrorHandling((index: string | undefined, opts) =>
         showCommand(index !== undefined ? parseInt(index, 10) : undefined, {
           project: opts.project as string | undefined,
           files: opts.files as boolean,
-          cat: opts.cat as boolean,
+          cat: opts.cat === undefined ? undefined : (opts.cat === true ? "" : (opts.cat as string)),
           json: opts.json as boolean,
         }),
       ),

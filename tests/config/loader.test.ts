@@ -13,7 +13,7 @@ vi.mock("node:fs/promises", () => ({
 }))
 
 import { readFile, writeFile, access } from "node:fs/promises"
-import { resolveLocalPath, configExists, loadConfig, saveConfig } from "../../src/config/loader.js"
+import { resolveLocalPath, configExists, loadConfig, saveConfig, updateConfig } from "../../src/config/loader.js"
 import { homedir } from "node:os"
 
 const validConfig = {
@@ -140,5 +140,59 @@ describe("saveConfig", () => {
     await saveConfig(validConfig as Parameters<typeof saveConfig>[0])
     const [, content] = vi.mocked(writeFile).mock.calls[0]!
     expect((content as string).endsWith("\n")).toBe(true)
+  })
+})
+
+// ─── updateConfig ─────────────────────────────────────────────────────────────
+
+describe("updateConfig", () => {
+  it("merges partial update into the existing config", async () => {
+    vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify(validConfig))
+    vi.mocked(writeFile).mockResolvedValueOnce(undefined)
+
+    const result = await updateConfig({ autoSync: false })
+
+    expect(result.autoSync).toBe(false)
+    // Other fields should be preserved
+    expect(result.remote).toBe(validConfig.remote)
+    expect(result.localPath).toBe(validConfig.localPath)
+  })
+
+  it("writes the merged config back to disk", async () => {
+    vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify(validConfig))
+    vi.mocked(writeFile).mockResolvedValueOnce(undefined)
+
+    await updateConfig({ autoSync: false })
+
+    expect(writeFile).toHaveBeenCalledOnce()
+    const [, content] = vi.mocked(writeFile).mock.calls[0]!
+    const written = JSON.parse(content as string)
+    expect(written.autoSync).toBe(false)
+    expect(written.remote).toBe(validConfig.remote)
+  })
+
+  it("validates the merged config with Zod (throws on invalid update)", async () => {
+    vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify(validConfig))
+
+    // Setting remote to empty string should fail Zod validation (min length 1)
+    await expect(updateConfig({ remote: "" } as Parameters<typeof updateConfig>[0])).rejects.toThrow()
+  })
+
+  it("returns the validated merged config", async () => {
+    vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify(validConfig))
+    vi.mocked(writeFile).mockResolvedValueOnce(undefined)
+
+    const result = await updateConfig({ autoSync: false })
+
+    // Result should include all original fields plus the update
+    expect(result.version).toBe(validConfig.version)
+    expect(result.defaults.compression).toBe(true)
+    expect(result.autoSync).toBe(false)
+  })
+
+  it("throws if the existing config cannot be loaded", async () => {
+    vi.mocked(readFile).mockRejectedValueOnce(Object.assign(new Error("ENOENT"), { code: "ENOENT" }))
+
+    await expect(updateConfig({ autoSync: false })).rejects.toThrow("Config file not found")
   })
 })

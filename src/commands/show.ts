@@ -26,8 +26,10 @@
 import { readFile } from "node:fs/promises"
 import { join } from "node:path"
 import chalk from "chalk"
+import ora from "ora"
 import { loadConfig, resolveLocalPath } from "../config/loader.js"
 import { ProjectDetector } from "../core/detector.js"
+import { GitManager } from "../core/git.js"
 import { Stasher } from "../core/stasher.js"
 import { exists } from "../utils/fs.js"
 import { formatSize, formatStashDetails } from "../utils/format.js"
@@ -38,8 +40,11 @@ export interface ShowCommandOptions {
   project?: string
   /** Print only the file list (no metadata) */
   files?: boolean
-  /** Print file contents (cat all files) */
-  cat?: boolean
+  /**
+   * Print file contents. Empty string = cat all files, any pattern = filter by glob.
+   * `undefined` means cat is disabled.
+   */
+  cat?: string
   /** Output as JSON */
   json?: boolean
 }
@@ -60,6 +65,19 @@ export async function showCommand(
 ): Promise<void> {
   const config = await loadConfig()
   const repoPath = resolveLocalPath(config.localPath)
+
+  // Auto-pull before showing (ensures we have latest stashes from other machines)
+  if (config.autoSync) {
+    const git = new GitManager(repoPath)
+    const pullSpinner = ora("Syncing...").start()
+    try {
+      await git.pull()
+      pullSpinner.succeed(chalk.green("Synced"))
+    } catch {
+      pullSpinner.warn(chalk.dim("Sync failed — showing local data"))
+    }
+  }
+
   const stasher = new Stasher(repoPath)
 
   // Detect project
@@ -112,9 +130,25 @@ export async function showCommand(
   console.log(formatStashDetails(selectedStash, project))
   console.log()
 
-  // Cat: print file contents
-  if (options.cat) {
-    for (const file of selectedStash.files) {
+  // Cat: print file contents (optionally filtered by glob pattern)
+  if (options.cat !== undefined) {
+    let filesToCat = selectedStash.files
+
+    if (options.cat.length > 0) {
+      const { default: micromatch } = await import("micromatch")
+      const matchedNames = micromatch(
+        selectedStash.files.map(f => f.name),
+        options.cat,
+      )
+      filesToCat = selectedStash.files.filter(f => matchedNames.includes(f.name))
+
+      if (filesToCat.length === 0) {
+        console.log(chalk.yellow(`  No files match pattern: ${chalk.bold(options.cat)}\n`))
+        return
+      }
+    }
+
+    for (const file of filesToCat) {
       const filePath = join(repoPath, project, selectedStash.id, file.name)
 
       console.log(chalk.bold.cyan(`── ${file.name} ${"─".repeat(Math.max(0, 60 - file.name.length))}`))

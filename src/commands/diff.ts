@@ -27,8 +27,10 @@
 import { readFile } from "node:fs/promises"
 import { join } from "node:path"
 import chalk from "chalk"
+import ora from "ora"
 import { loadConfig, resolveLocalPath } from "../config/loader.js"
 import { ProjectDetector } from "../core/detector.js"
+import { GitManager } from "../core/git.js"
 import { Stasher } from "../core/stasher.js"
 import { exists } from "../utils/fs.js"
 import { formatStashLine } from "../utils/format.js"
@@ -339,6 +341,19 @@ export async function diffCommand(
 ): Promise<void> {
   const config = await loadConfig()
   const repoPath = resolveLocalPath(config.localPath)
+
+  // Auto-pull before diffing (ensures we have latest stashes from other machines)
+  if (config.autoSync) {
+    const git = new GitManager(repoPath)
+    const pullSpinner = ora("Syncing...").start()
+    try {
+      await git.pull()
+      pullSpinner.succeed(chalk.green("Synced"))
+    } catch {
+      pullSpinner.warn(chalk.dim("Sync failed — showing local data"))
+    }
+  }
+
   const stasher = new Stasher(repoPath)
 
   // Detect project

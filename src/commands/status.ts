@@ -21,6 +21,7 @@
  */
 
 import chalk from "chalk"
+import ora from "ora"
 import { loadConfig, resolveLocalPath } from "../config/loader.js"
 import { ProjectDetector } from "../core/detector.js"
 import { Stasher } from "../core/stasher.js"
@@ -48,12 +49,24 @@ export interface StatusCommandOptions {
 export async function statusCommand(options: StatusCommandOptions): Promise<void> {
   const config = await loadConfig()
   const repoPath = resolveLocalPath(config.localPath)
-  const stasher = new Stasher(repoPath)
-  const indexer = new Indexer(repoPath)
   const git = new GitManager(repoPath)
 
   // Check if local stash repo exists
   const repoExists = await exists(repoPath)
+
+  // Auto-pull before showing status (ensures we have latest data from other machines)
+  if (config.autoSync && repoExists) {
+    const pullSpinner = ora("Syncing...").start()
+    try {
+      await git.pull()
+      pullSpinner.succeed(chalk.green("Synced"))
+    } catch {
+      pullSpinner.warn(chalk.dim("Sync failed — showing local data"))
+    }
+  }
+
+  const stasher = new Stasher(repoPath)
+  const indexer = new Indexer(repoPath)
 
   // Collect project list
   let projects: string[]

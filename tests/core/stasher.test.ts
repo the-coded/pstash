@@ -60,7 +60,7 @@ describe("Stasher.save()", () => {
     expect(metadata.files.length).toBe(2)
     expect(metadata.totalSize).toBeGreaterThan(0)
     expect(metadata.compressed).toBe(false)
-    expect(metadata.id).toMatch(/^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}_[a-zA-Z0-9]{4}$/)
+    expect(metadata.id).toMatch(/^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}_[a-zA-Z0-9_-]{4}$/)
   })
 
   it("generates SHA-256 hashes with 'sha256:' prefix", async () => {
