@@ -23,6 +23,7 @@ pstash pop
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Commands](#commands)
+  - [Command Summary](#command-summary)
   - [init](#init)
   - [save](#save)
   - [list](#list)
@@ -150,6 +151,25 @@ pstash apply 1          # restore without deleting
 
 ## Commands
 
+### Command Summary
+
+| Command | Description |
+|---------|-------------|
+| [`init`](#init) | Initialize pstash — clone data repo and create `~/.pstashrc` |
+| [`save`](#save) | Stash files with a message, commit and sync |
+| [`list`](#list) | List stashes for the current project (or all projects) |
+| [`pop`](#pop) | Restore stash files to disk and **delete** the stash |
+| [`apply`](#apply) | Restore stash files **without deleting** the stash |
+| [`sync`](#sync) | Manually synchronize the stash repo (pull + push) |
+| [`show`](#show) | Show details or file contents of a stash entry |
+| [`drop`](#drop) | Delete a stash entry without restoring its files |
+| [`status`](#status) | Show stash repository status and per-project summary |
+| [`clean`](#clean) | Bulk-remove old or filtered stash entries |
+| [`diff`](#diff) | Compare two stashes, or a stash against the current working directory |
+| [`config`](#config) | View or set configuration values |
+
+---
+
 ### `init`
 
 Initialize pstash — clone data repo and create `~/.pstashrc`.
@@ -160,20 +180,20 @@ pstash init [options]
 
 | Option | Description |
 |--------|-------------|
-| `--remote <url>` | SSH or HTTPS URL of your data repo |
-| `--path <path>` | Local path to clone to (default: `~/.pstash`) |
+| `-r, --remote <url>` | SSH or HTTPS URL of your data repo |
+| `-p, --path <path>` | Local path to clone to (default: `~/.pstash`) |
 
 **Examples:**
 ```bash
 pstash init --remote git@github.com:you/my-stash.git
-pstash init --remote https://github.com/you/my-stash.git --path ~/stash
+pstash init -r https://github.com/you/my-stash.git --path ~/stash
 ```
 
 ---
 
 ### `save`
 
-Stash files with a message. Files are copied to the data repo, committed, and optionally pushed.
+Stash files with a message. Files are copied to the data repo, committed, and synced (pull before + push after) when `autoSync` is enabled.
 
 ```bash
 pstash save [options] <message> [files...]
@@ -181,12 +201,12 @@ pstash save [options] <message> [files...]
 
 | Option | Description |
 |--------|-------------|
-| `-t, --tag <tag>` | Tag (repeatable: `-t docs -t wip`) |
+| `-t, --tag <tag>` | Add tag (repeatable: `-t docs -t wip`) |
 | `-p, --project <name>` | Override auto-detected project name |
-| `--no-push` | Skip push after saving |
-| `--no-compress` | Skip tar.gz compression |
+| `--no-sync` | Skip auto pull+push for this operation |
+| `--no-compress` | Skip tar.gz compression (overrides `defaults.compression`) |
 | `--rm` | Remove source files after saving |
-| `--keep` | Keep source files (overrides config default) |
+| `--keep` | Keep source files (overrides `defaults.removeAfterSave=true`) |
 
 **Examples:**
 ```bash
@@ -194,6 +214,7 @@ pstash save "planning notes" *.md
 pstash save -t api -t draft "openapi spec" openapi.yaml
 pstash save --rm "WIP code" src/experiment.ts
 pstash save --no-compress "large binary" *.bin
+pstash save --no-sync "quick local save" *.md
 ```
 
 **Project detection order:**
@@ -219,7 +240,7 @@ pstash list [options]
 | `-t, --tag <tag>` | Filter by tag |
 | `--since <timespec>` | Show stashes after date (`7d`, `2w`, `1m`, ISO) |
 | `--until <timespec>` | Show stashes before date |
-| `--preview` | Show first 3 lines of each file |
+| `--preview` | Show a preview of the first line of each file |
 | `--json` | Output as JSON |
 
 **Examples:**
@@ -234,7 +255,7 @@ pstash list --json | jq '.[0].id'
 
 ### `pop`
 
-Restore stash files to the current directory and **delete** the stash.
+Restore stash files to the current directory and **delete** the stash. When `autoSync` is enabled, pulls before and pushes after.
 
 ```bash
 pstash pop [options] [index]
@@ -242,36 +263,51 @@ pstash pop [options] [index]
 
 | Option | Description |
 |--------|-------------|
-| `--files <pattern>` | Partial restore (glob, e.g. `"*.md"`) |
-| `--dest <path>` | Restore to a different directory |
+| `-d, --dest <path>` | Destination directory (default: current directory) |
+| `-f, --files <pattern>` | Partial restore — only files matching glob pattern |
+| `-p, --project <name>` | Override auto-detected project name |
 | `--force` | Overwrite existing files |
-| `[index]` | 0-based index (0 = newest). If omitted: interactive |
+| `[index]` | 0-based index (0 = newest). If omitted: interactive selector |
 
 **Examples:**
 ```bash
 pstash pop              # interactive selector
 pstash pop 0            # newest stash
-pstash pop 2 --dest /tmp/restore
-pstash pop 0 --files "*.md"   # partial restore
+pstash pop 2 -d /tmp/restore
+pstash pop 0 -f "*.md"   # partial restore
 ```
 
 ---
 
 ### `apply`
 
-Restore stash files **without deleting** the stash (like `git stash apply`).
+Restore stash files **without deleting** the stash (like `git stash apply`). When `autoSync` is enabled, pulls before restoring — but does **not** push (no changes to the stash repo).
 
 ```bash
 pstash apply [options] [index]
 ```
 
-Same options as `pop`. The stash remains in the data repo after restore.
+| Option | Description |
+|--------|-------------|
+| `-d, --dest <path>` | Destination directory (default: current directory) |
+| `-f, --files <pattern>` | Partial restore — only files matching glob pattern |
+| `-p, --project <name>` | Override auto-detected project name |
+| `--force` | Overwrite existing files |
+| `[index]` | 0-based index (0 = newest). If omitted: interactive selector |
+
+**Examples:**
+```bash
+pstash apply            # interactive selector
+pstash apply 0          # apply newest stash
+pstash apply 1 -d /tmp/restore
+pstash apply 0 -f "*.ts"
+```
 
 ---
 
 ### `sync`
 
-Synchronize the stash repo with remote (pull + push).
+Manually synchronize the stash repo with remote (pull + push). Useful when `autoSync=false` or to force a sync at any time.
 
 ```bash
 pstash sync [options]
@@ -285,15 +321,15 @@ pstash sync [options]
 **Examples:**
 ```bash
 pstash sync          # pull + push
-pstash sync --pull   # pull only (fetch updates from other machines)
-pstash sync --push   # push only (upload local stashes)
+pstash sync --pull   # fetch updates from other machines
+pstash sync --push   # upload local stashes
 ```
 
 ---
 
 ### `show`
 
-Show details of a specific stash entry.
+Show details of a specific stash entry — metadata, file list, or file contents.
 
 ```bash
 pstash show [options] [index]
@@ -301,17 +337,19 @@ pstash show [options] [index]
 
 | Option | Description |
 |--------|-------------|
-| `--files` | List stashed files only |
-| `--cat` | Print file contents to stdout |
+| `-p, --project <name>` | Override auto-detected project name |
+| `-f, --files` | List stashed filenames only (no metadata) |
+| `-c, --cat [pattern]` | Print file contents to stdout (optional glob to filter files) |
 | `--json` | Output metadata as JSON |
-| `[index]` | 0-based index. If omitted: interactive |
+| `[index]` | 0-based index. If omitted: interactive selector |
 
 **Examples:**
 ```bash
 pstash show             # interactive selector
 pstash show 0           # newest stash
-pstash show 0 --files   # list filenames
-pstash show 0 --cat     # print all file contents
+pstash show 0 -f        # list filenames only
+pstash show 0 -c        # print all file contents
+pstash show 0 -c "*.md" # print only markdown files
 pstash show 0 --json    # machine-readable output
 ```
 
@@ -327,11 +365,12 @@ pstash drop [options] [index]
 
 | Option | Description |
 |--------|-------------|
-| `-a, --all` | Drop all stashes in current project (double-confirm) |
+| `-p, --project <name>` | Override auto-detected project name |
 | `-t, --tag <tag>` | Drop all stashes with this tag |
+| `-a, --all` | Drop all stashes in the current project (requires confirmation) |
 | `--force` | Skip confirmation prompt |
 | `--dry-run` | Preview what would be deleted |
-| `[index]` | 0-based index. If omitted: interactive |
+| `[index]` | 0-based index. If omitted: interactive selector |
 
 **Examples:**
 ```bash
@@ -372,7 +411,7 @@ other-proj        1      12 KB     3 days ago
 
 ### `clean`
 
-Remove old or filtered stash entries. **Requires at least one filter** (safety guard).
+Bulk-remove old or filtered stash entries. **Requires at least one filter** (safety guard).
 
 ```bash
 pstash clean [options]
@@ -380,18 +419,19 @@ pstash clean [options]
 
 | Option | Description |
 |--------|-------------|
-| `--older-than <timespec>` | Delete stashes older than (`30d`, `2w`, `1m`) |
-| `--keep <n>` | Keep only N most recent stashes per project |
-| `--tag <tag>` | Delete only stashes with this tag |
-| `--all` | Delete all stashes in current project |
+| `--older-than <timespec>` | Delete stashes older than this (`30d`, `2w`, `1m`) |
+| `--keep <n>` | Keep only the N most recent stashes per project |
+| `-t, --tag <tag>` | Delete only stashes with this tag |
+| `-a, --all` | Clean across all projects |
+| `-p, --project <name>` | Override auto-detected project name |
 | `--dry-run` | Preview what would be deleted |
-| `--force` | Skip confirmation |
+| `--force` | Skip confirmation prompt |
 
 **Examples:**
 ```bash
 pstash clean --older-than 30d
 pstash clean --keep 5
-pstash clean --tag wip --dry-run
+pstash clean -t wip --dry-run
 pstash clean --older-than 7d --force
 ```
 
@@ -399,7 +439,7 @@ pstash clean --older-than 7d --force
 
 ### `diff`
 
-Compare two stashes, or a stash against the current working directory.
+Compare two stashes, or a stash against the current working directory. Built-in LCS-based diff — no external tools required.
 
 ```bash
 pstash diff [options] [indexA] [indexB]
@@ -407,11 +447,11 @@ pstash diff [options] [indexA] [indexB]
 
 | Option | Description |
 |--------|-------------|
-| `--files <pattern>` | Limit diff to matching files |
-| `[indexA]` | First stash index (default: interactive) |
-| `[indexB]` | Second stash index (omit to compare with cwd) |
-
-Built-in LCS-based diff — no external tools required.
+| `-p, --project <name>` | Override auto-detected project name |
+| `--files <pattern>` | Limit diff to files matching this glob pattern |
+| `--stat` | Show only changed file names (no inline diff) |
+| `[indexA]` | First stash index (default: interactive selector) |
+| `[indexB]` | Second stash index — omit to compare against cwd |
 
 **Examples:**
 ```bash
@@ -419,6 +459,7 @@ pstash diff             # interactive selection
 pstash diff 0 1         # compare two stashes
 pstash diff 0           # compare stash 0 with cwd
 pstash diff 0 1 --files "*.ts"   # limit to TypeScript files
+pstash diff 0 --stat    # summary only
 ```
 
 ---
@@ -428,16 +469,22 @@ pstash diff 0 1 --files "*.ts"   # limit to TypeScript files
 View or set configuration values using dot-notation keys.
 
 ```bash
-pstash config [key] [value]
+pstash config [options] [key] [value]
 ```
+
+| Option | Description |
+|--------|-------------|
+| `-l, --list` | List all config values (default when no key given) |
+| `--json` | Output as JSON |
 
 **Examples:**
 ```bash
 pstash config                          # list all config
-pstash config defaults.autoPush        # get value
-pstash config defaults.autoPush false  # set value
+pstash config --json                   # list as JSON
+pstash config autoSync                 # get value
+pstash config autoSync false           # set value
 pstash config defaults.compression true
-pstash config autoSync false
+pstash config defaults.keepOnPop false
 ```
 
 ---
@@ -459,7 +506,6 @@ Config is stored at `~/.pstashrc` (JSON). Example:
   },
   "defaults": {
     "keepOnPop": false,
-    "autoPush": true,
     "compression": true,
     "removeAfterSave": false
   }
@@ -472,11 +518,12 @@ Config is stored at `~/.pstashrc` (JSON). Example:
 |-----|------|---------|-------------|
 | `remote` | `string` | — | URL of your data repo (required) |
 | `localPath` | `string` | `~/.pstash` | Local clone path |
-| `autoSync` | `boolean` | `true` | Auto pull/push on operations |
-| `defaults.keepOnPop` | `boolean` | `false` | If true, `pop` behaves like `apply` |
-| `defaults.autoPush` | `boolean` | `true` | Push after saving |
-| `defaults.compression` | `boolean` | `true` | Compress stashes as tar.gz |
-| `defaults.removeAfterSave` | `boolean` | `false` | Delete source files after save |
+| `autoSync` | `boolean` | `true` | Auto pull before reads, pull+push after writes |
+| `defaults.keepOnPop` | `boolean` | `false` | If `true`, `pop` keeps the stash (behaves like `apply`) |
+| `defaults.compression` | `boolean` | `true` | Compress stashes as `tar.gz` |
+| `defaults.removeAfterSave` | `boolean` | `false` | Delete source files after `save` |
+
+> **`autoSync`** is the master sync switch. When enabled, pstash automatically pulls the latest changes before read operations (`list`, `show`, `diff`, `status`, `apply`) and pulls + pushes around write operations (`save`, `pop`, `drop`, `clean`). Override per-command with `--no-sync`.
 
 ### Project Aliases
 
