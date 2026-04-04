@@ -15,7 +15,7 @@
  */
 
 import { copyFile, mkdir, mkdtemp, readFile, readdir, rm, stat } from "node:fs/promises"
-import { join, basename } from "node:path"
+import { join, relative, dirname, basename, isAbsolute } from "node:path"
 import { tmpdir } from "node:os"
 import { createHash } from "node:crypto"
 import { userInfo, hostname } from "node:os"
@@ -104,8 +104,15 @@ export class Stasher {
     let totalSize = 0
 
     for (const filePath of resolvedFiles) {
-      const fileName = basename(filePath)
-      const dest = join(stashDir, fileName)
+      // Preserve relative path from cwd so directory structure is restored correctly.
+      // e.g. "@todo/PROGRESS.md" instead of just "PROGRESS.md".
+      // Falls back to basename when the file is outside cwd (e.g. absolute path to /tmp/...).
+      const rel = relative(process.cwd(), filePath)
+      const relativePath = rel.startsWith("..") ? basename(filePath) : rel
+      const dest = join(stashDir, relativePath)
+
+      // Ensure subdirectory exists inside stash dir before copying
+      await mkdir(dirname(dest), { recursive: true })
       await copyFile(filePath, dest)
 
       const content = await readFile(filePath)
@@ -114,11 +121,11 @@ export class Stasher {
       const hash = `sha256:${createHash("sha256").update(content).digest("hex").slice(0, 12)}`
 
       fileMetadata.push({
-        name: fileName,
+        name: relativePath,
         size: fileStats.size,
         hash,
       })
-      copiedFileNames.push(fileName)
+      copiedFileNames.push(relativePath)
       totalSize += fileStats.size
     }
 
@@ -231,6 +238,8 @@ export class Stasher {
         throw new Error(`File already exists: ${dest}\nUse --force to overwrite.`)
       }
 
+      // Recreate directory structure at destination
+      await mkdir(dirname(dest), { recursive: true })
       await copyFile(src, dest)
     }
   }
@@ -271,6 +280,8 @@ export class Stasher {
           }
 
           if (await exists(src)) {
+            // Recreate directory structure at destination
+            await mkdir(dirname(dest), { recursive: true })
             await copyFile(src, dest)
           }
         }

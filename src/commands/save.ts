@@ -19,6 +19,7 @@
 
 import chalk from "chalk"
 import ora from "ora"
+import { simpleGit } from "simple-git"
 import { loadConfig, resolveLocalPath } from "../config/loader.js"
 import { ProjectDetector } from "../core/detector.js"
 import { Stasher } from "../core/stasher.js"
@@ -41,6 +42,11 @@ export interface SaveCommandOptions {
   keep?: boolean
   /** Disable compression (overrides config defaults.compression) */
   noCompress?: boolean
+  /**
+   * Auto-detect unstaged (modified + untracked) files from git status and stash them.
+   * When set, any explicit [files...] patterns are ignored.
+   */
+  unstaged?: boolean
 }
 
 /**
@@ -85,6 +91,26 @@ export async function saveCommand(
   const branch = await detector.getCurrentBranch()
   const commit = await detector.getCurrentCommit()
 
+  // Resolve file patterns — use git unstaged files if --unstaged is set
+  let resolvedPatterns = filePatterns
+  if (options.unstaged) {
+    const projectGit = simpleGit(process.cwd())
+    let status
+    try {
+      status = await projectGit.status()
+    } catch {
+      throw new Error("--unstaged requires a git repository in the current directory")
+    }
+    // modified (not staged) + untracked files
+    const unstagedFiles = [...status.not_added, ...status.modified]
+    if (unstagedFiles.length === 0) {
+      console.log(chalk.yellow("  No unstaged files found."))
+      return
+    }
+    resolvedPatterns = unstagedFiles
+    console.log(chalk.dim(`  Unstaged files detected: ${unstagedFiles.length}`))
+  }
+
   // Save stash
   const spinner = ora("Saving stash...").start()
   const stasher = new Stasher(repoPath)
@@ -96,7 +122,7 @@ export async function saveCommand(
     metadata = await stasher.save({
       project,
       message,
-      files: filePatterns,
+      files: resolvedPatterns,
       tags: options.tag ?? [],
       branch,
       commit,

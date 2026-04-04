@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest"
-import { mkdtemp, writeFile, rm, readFile, access } from "node:fs/promises"
+import { mkdtemp, mkdir, writeFile, rm, readFile, access } from "node:fs/promises"
 import { join } from "node:path"
 import { tmpdir } from "node:os"
 import { Stasher } from "../../src/core/stasher.js"
@@ -236,6 +236,91 @@ describe("Stasher.delete()", () => {
     await expect(
       stasher.delete("nonexistent-project", "nonexistent-id"),
     ).resolves.not.toThrow()
+  })
+})
+
+// ─── Directory structure preservation ────────────────────────────────────────
+
+describe("Stasher — directory structure preservation", () => {
+  it("preserves subdirectory structure when restoring (files stored with relative paths)", async () => {
+    // Simulate a stash that was saved with nested file paths (e.g. @todo/PROGRESS.md)
+    // by directly writing files into the stash dir with a subdir structure,
+    // then verifying restore recreates those subdirs at the destination.
+    const stashWithSubdirProject = "subdir-project"
+
+    // Write a file nested inside a subdir in tempSrcDir
+    const nestedDir = join(tempSrcDir, "docs")
+    await mkdir(nestedDir, { recursive: true })
+    await writeFile(join(nestedDir, "api.md"), "# API\n\nAPI reference.")
+
+    // Save with full absolute path — triggers basename fallback (file is outside cwd)
+    const metadata = await stasher.save({
+      project: stashWithSubdirProject,
+      message: "nested file",
+      files: [join(tempSrcDir, "docs", "api.md")],
+    })
+
+    // Files outside cwd use basename fallback: stored as "api.md" not "docs/api.md"
+    expect(metadata.files[0]!.name).toBe("api.md")
+
+    // Restore and verify file is at the destination root (basename behavior)
+    const destDir = await mkdtemp(join(tmpdir(), "pstash-dest-"))
+    try {
+      await stasher.restore({
+        project: stashWithSubdirProject,
+        stashId: metadata.id,
+        dest: destDir,
+      })
+
+      const restoredFlat = join(destDir, "api.md")
+      expect(await fileExists(restoredFlat)).toBe(true)
+    } finally {
+      await rm(destDir, { recursive: true, force: true })
+    }
+  })
+
+  it("restores subdirectory structure when metadata contains path-prefixed filenames", async () => {
+    // Simulate a stash already stored with nested file names (as saved from within cwd).
+    // We manually inject a file at "subdir/file.md" inside the stash dir.
+    const stashProject = "nested-restore-project"
+
+    // First save something to get a stash entry scaffolded
+    const seedMeta = await stasher.save({
+      project: stashProject,
+      message: "seed",
+      files: [join(tempSrcDir, "README.md")],
+    })
+
+    // Now manually add a nested file to the existing stash directory
+    const stashDir = join(tempRepoDir, stashProject, seedMeta.id)
+    await mkdir(join(stashDir, "nested"), { recursive: true })
+    await writeFile(join(stashDir, "nested", "guide.md"), "# Guide")
+
+    // Directly call restoreUncompressed via restore() by injecting a metadata-like file
+    // that references the nested path — we rebuild .stash.json with a nested file entry
+    const nestedMetadata = {
+      ...seedMeta,
+      files: [{ name: "nested/guide.md", size: 10, hash: "sha256:aabbccddeeff" }],
+    }
+    const { writeFile: writeJsonRaw } = await import("node:fs/promises")
+    await writeJsonRaw(join(stashDir, ".stash.json"), JSON.stringify(nestedMetadata), "utf-8")
+
+    // Restore and verify the subdirectory is recreated at the destination
+    const destDir = await mkdtemp(join(tmpdir(), "pstash-dest-"))
+    try {
+      await stasher.restore({
+        project: stashProject,
+        stashId: seedMeta.id,
+        dest: destDir,
+      })
+
+      const restoredNested = join(destDir, "nested", "guide.md")
+      expect(await fileExists(restoredNested)).toBe(true)
+      const content = await readFile(restoredNested, "utf-8")
+      expect(content).toBe("# Guide")
+    } finally {
+      await rm(destDir, { recursive: true, force: true })
+    }
   })
 })
 

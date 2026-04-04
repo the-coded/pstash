@@ -111,6 +111,7 @@ async function createProgram(): Promise<Command> {
     .option("--rm", "Remove source files after saving")
     .option("--keep", "Keep source files (overrides config removeAfterSave=true)")
     .option("--no-compress", "Skip compression (overrides config defaults.compression)")
+    .option("--unstaged", "Auto-detect unstaged git files and stash them (ignores [files...] patterns)")
     .action(
       withErrorHandling((message: string, files: string[], opts) =>
         saveCommand(message, files, {
@@ -120,6 +121,7 @@ async function createProgram(): Promise<Command> {
           rm: opts.rm as boolean,
           keep: opts.keep as boolean,
           noCompress: !opts.compress as boolean,
+          unstaged: opts.unstaged as boolean,
         }),
       ),
     )

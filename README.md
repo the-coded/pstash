@@ -207,6 +207,7 @@ pstash save [options] <message> [files...]
 | `--no-compress` | Skip tar.gz compression (overrides `defaults.compression`) |
 | `--rm` | Remove source files after saving |
 | `--keep` | Keep source files (overrides `defaults.removeAfterSave=true`) |
+| `--unstaged` | Auto-detect unstaged git files (modified + untracked) and stash them — ignores `[files...]` |
 
 **Examples:**
 ```bash
@@ -215,6 +216,7 @@ pstash save -t api -t draft "openapi spec" openapi.yaml
 pstash save --rm "WIP code" src/experiment.ts
 pstash save --no-compress "large binary" *.bin
 pstash save --no-sync "quick local save" *.md
+pstash save --unstaged "WIP before switch"
 ```
 
 **Project detection order:**
@@ -222,6 +224,10 @@ pstash save --no-sync "quick local save" *.md
 2. Git `origin` remote → extract repo name
 3. Any other git remote
 4. `basename(cwd)`
+
+**Directory structure preservation:**
+
+Files within the current directory are stored with their relative path intact. For example, `@todo/PROGRESS.md` is stored as `@todo/PROGRESS.md` inside the stash — not as a flat `PROGRESS.md`. When restored via `pop` or `apply`, subdirectories are recreated automatically. Files outside `cwd` (e.g. absolute paths) fall back to `basename` only.
 
 ---
 
