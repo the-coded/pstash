@@ -12,7 +12,6 @@
  * - `remote`                     — SSH/HTTPS URL of the stash data repo
  * - `localPath`                  — Local clone path (e.g. ~/.pstash)
  * - `autoSync`                   — true/false
- * - `defaults.autoPush`          — true/false
  * - `defaults.compression`       — true/false
  * - `defaults.removeAfterSave`   — true/false
  * - `defaults.keepOnPop`         — true/false
@@ -22,10 +21,10 @@
  * pstash config
  *
  * // Get a specific value
- * pstash config defaults.autoPush
+ * pstash config defaults.compression
  *
  * // Set a value
- * pstash config defaults.autoPush false
+ * pstash config defaults.compression true
  *
  * // Output as JSON
  * pstash config --json
@@ -47,7 +46,6 @@ const SETTABLE_KEYS: Record<string, "string" | "boolean"> = {
   remote: "string",
   localPath: "string",
   autoSync: "boolean",
-  "defaults.autoPush": "boolean",
   "defaults.compression": "boolean",
   "defaults.removeAfterSave": "boolean",
   "defaults.keepOnPop": "boolean",
@@ -57,12 +55,12 @@ const SETTABLE_KEYS: Record<string, "string" | "boolean"> = {
  * Gets a nested config value using dot notation.
  *
  * @param config - The global config object
- * @param key - Dot-notation key path (e.g. "defaults.autoPush")
+ * @param key - Dot-notation key path (e.g. "defaults.compression")
  * @returns The value at the key path, or undefined if not found
  *
  * @example
- * getConfigValue(config, "defaults.autoPush") // → true
- * getConfigValue(config, "remote")             // → "git@github.com:..."
+ * getConfigValue(config, "defaults.compression") // → false
+ * getConfigValue(config, "remote")               // → "git@github.com:..."
  */
 function getConfigValue(config: GlobalConfig, key: string): unknown {
   const parts = key.split(".")
@@ -81,7 +79,7 @@ function getConfigValue(config: GlobalConfig, key: string): unknown {
  * Does NOT write to disk — call `saveConfig()` after this.
  *
  * @param config - The global config object to mutate a copy of
- * @param key - Dot-notation key path (e.g. "defaults.autoPush")
+ * @param key - Dot-notation key path (e.g. "defaults.compression")
  * @param rawValue - String representation of the new value
  * @returns Updated config object (deep clone with the new value applied)
  *
@@ -89,7 +87,7 @@ function getConfigValue(config: GlobalConfig, key: string): unknown {
  * @throws {Error} If the value type is invalid for the key
  *
  * @example
- * const updated = setConfigValue(config, "defaults.autoPush", "false")
+ * const updated = setConfigValue(config, "defaults.compression", "true")
  * await saveConfig(updated)
  */
 function setConfigValue(config: GlobalConfig, key: string, rawValue: string): GlobalConfig {
@@ -132,7 +130,6 @@ function printConfigTable(config: GlobalConfig): void {
     ["remote", config.remote],
     ["localPath", config.localPath],
     ["autoSync", String(config.autoSync)],
-    ["defaults.autoPush", String(config.defaults.autoPush)],
     ["defaults.compression", String(config.defaults.compression)],
     ["defaults.removeAfterSave", String(config.defaults.removeAfterSave)],
     ["defaults.keepOnPop", String(config.defaults.keepOnPop)],

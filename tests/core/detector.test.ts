@@ -53,7 +53,6 @@ function makeConfig(
     ),
     defaults: {
       keepOnPop: false,
-      autoPush: true,
       compression: true,
       removeAfterSave: false,
     },
