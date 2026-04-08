@@ -206,7 +206,7 @@ export const GlobalConfigSchema = z.object({
     /** If true, `pstash pop` keeps the stash after restoring (like apply) */
     keepOnPop: z.boolean().default(false),
     /** If true, compress stash files as tar.gz (Phase 3) */
-    compression: z.boolean().default(true),
+    compression: z.boolean().default(false),
     /**
      * If true, delete source files after `pstash save`.
      * Can be overridden per-operation: `--rm` to force delete, `--keep` to force keep.
@@ -240,7 +240,7 @@ export const SaveOptionsSchema = z.object({
   /** Whether to push to remote after saving */
   push: z.boolean().default(true),
   /** Whether to compress the stash (Phase 3) */
-  compress: z.boolean().default(true),
+  compress: z.boolean().default(false),
   /**
    * Whether to remove source files after saving.
    * `undefined` = use `config.defaults.removeAfterSave`.

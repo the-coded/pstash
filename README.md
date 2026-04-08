@@ -204,7 +204,7 @@ pstash save [options] <message> [files...]
 | `-t, --tag <tag>` | Add tag (repeatable: `-t docs -t wip`) |
 | `-p, --project <name>` | Override auto-detected project name |
 | `--no-sync` | Skip auto pull+push for this operation |
-| `--no-compress` | Skip tar.gz compression (overrides `defaults.compression`) |
+| `--compress` | Compress stash as tar.gz (overrides `defaults.compression`) |
 | `--rm` | Remove source files after saving |
 | `--keep` | Keep source files (overrides `defaults.removeAfterSave=true`) |
 | `--unstaged` | Auto-detect unstaged git files (modified + untracked) and stash them — ignores `[files...]` |
@@ -214,7 +214,7 @@ pstash save [options] <message> [files...]
 pstash save "planning notes" *.md
 pstash save -t api -t draft "openapi spec" openapi.yaml
 pstash save --rm "WIP code" src/experiment.ts
-pstash save --no-compress "large binary" *.bin
+pstash save --compress "large archive" *.bin
 pstash save --no-sync "quick local save" *.md
 pstash save --unstaged "WIP before switch"
 ```
@@ -489,7 +489,7 @@ pstash config                          # list all config
 pstash config --json                   # list as JSON
 pstash config autoSync                 # get value
 pstash config autoSync false           # set value
-pstash config defaults.compression true
+pstash config defaults.compression false
 pstash config defaults.keepOnPop false
 ```
 
@@ -512,7 +512,7 @@ Config is stored at `~/.pstashrc` (JSON). Example:
   },
   "defaults": {
     "keepOnPop": false,
-    "compression": true,
+    "compression": false,
     "removeAfterSave": false
   }
 }
@@ -526,7 +526,7 @@ Config is stored at `~/.pstashrc` (JSON). Example:
 | `localPath` | `string` | `~/.pstash` | Local clone path |
 | `autoSync` | `boolean` | `true` | Auto pull before reads, pull+push after writes |
 | `defaults.keepOnPop` | `boolean` | `false` | If `true`, `pop` keeps the stash (behaves like `apply`) |
-| `defaults.compression` | `boolean` | `true` | Compress stashes as `tar.gz` |
+| `defaults.compression` | `boolean` | `false` | Compress stashes as `tar.gz` (use `--compress` flag to opt-in per save) |
 | `defaults.removeAfterSave` | `boolean` | `false` | Delete source files after `save` |
 
 > **`autoSync`** is the master sync switch. When enabled, pstash automatically pulls the latest changes before read operations (`list`, `show`, `diff`, `status`, `apply`) and pulls + pushes around write operations (`save`, `pop`, `drop`, `clean`). Override per-command with `--no-sync`.

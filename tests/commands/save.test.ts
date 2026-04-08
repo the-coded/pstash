@@ -206,23 +206,7 @@ describe("saveCommand — file removal", () => {
 // ─── Compression ─────────────────────────────────────────────────────────────
 
 describe("saveCommand — compression", () => {
-  it("passes compress=true when config compression=true and no flag override", async () => {
-    loaderMocks.loadConfig.mockResolvedValue(makeConfig())
-
-    await saveCommand("test stash", ["*.md"], { tag: [] })
-
-    expect(stasherMocks.save).toHaveBeenCalledWith(expect.objectContaining({ compress: true }))
-  })
-
-  it("passes compress=false when noCompress=true", async () => {
-    loaderMocks.loadConfig.mockResolvedValue(makeConfig())
-
-    await saveCommand("test stash", ["*.md"], { tag: [], noCompress: true })
-
-    expect(stasherMocks.save).toHaveBeenCalledWith(expect.objectContaining({ compress: false }))
-  })
-
-  it("passes compress=false when config compression=false", async () => {
+  it("passes compress=false when config compression=false and no flag override (default behavior)", async () => {
     loaderMocks.loadConfig.mockResolvedValue(
       makeConfig({ defaults: { keepOnPop: false, compression: false, removeAfterSave: false } }),
     )
@@ -230,6 +214,26 @@ describe("saveCommand — compression", () => {
     await saveCommand("test stash", ["*.md"], { tag: [] })
 
     expect(stasherMocks.save).toHaveBeenCalledWith(expect.objectContaining({ compress: false }))
+  })
+
+  it("passes compress=true when --compress flag is set (opt-in override)", async () => {
+    loaderMocks.loadConfig.mockResolvedValue(
+      makeConfig({ defaults: { keepOnPop: false, compression: false, removeAfterSave: false } }),
+    )
+
+    await saveCommand("test stash", ["*.md"], { tag: [], compress: true })
+
+    expect(stasherMocks.save).toHaveBeenCalledWith(expect.objectContaining({ compress: true }))
+  })
+
+  it("passes compress=true when config compression=true and no flag override", async () => {
+    loaderMocks.loadConfig.mockResolvedValue(
+      makeConfig({ defaults: { keepOnPop: false, compression: true, removeAfterSave: false } }),
+    )
+
+    await saveCommand("test stash", ["*.md"], { tag: [] })
+
+    expect(stasherMocks.save).toHaveBeenCalledWith(expect.objectContaining({ compress: true }))
   })
 })
 

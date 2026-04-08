@@ -110,7 +110,7 @@ async function createProgram(): Promise<Command> {
     .option("--no-sync", "Skip auto pull+push for this operation")
     .option("--rm", "Remove source files after saving")
     .option("--keep", "Keep source files (overrides config removeAfterSave=true)")
-    .option("--no-compress", "Skip compression (overrides config defaults.compression)")
+    .option("--compress", "Compress stash as tar.gz (overrides config defaults.compression)")
     .option("--unstaged", "Auto-detect unstaged git files and stash them (ignores [files...] patterns)")
     .action(
       withErrorHandling((message: string, files: string[], opts) =>
@@ -120,7 +120,7 @@ async function createProgram(): Promise<Command> {
           noSync: !opts.sync as boolean,
           rm: opts.rm as boolean,
           keep: opts.keep as boolean,
-          noCompress: !opts.compress as boolean,
+          compress: opts.compress as boolean | undefined,
           unstaged: opts.unstaged as boolean,
         }),
       ),

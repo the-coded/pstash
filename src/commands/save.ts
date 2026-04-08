@@ -40,8 +40,8 @@ export interface SaveCommandOptions {
   rm?: boolean
   /** Keep source files after saving (overrides config) */
   keep?: boolean
-  /** Disable compression (overrides config defaults.compression) */
-  noCompress?: boolean
+  /** Enable compression as tar.gz (overrides config defaults.compression=false) */
+  compress?: boolean
   /**
    * Auto-detect unstaged (modified + untracked) files from git status and stash them.
    * When set, any explicit [files...] patterns are ignored.
@@ -117,7 +117,7 @@ export async function saveCommand(
 
   let metadata
   try {
-    const shouldCompress = !options.noCompress && config.defaults.compression
+    const shouldCompress = options.compress ?? config.defaults.compression
 
     metadata = await stasher.save({
       project,
