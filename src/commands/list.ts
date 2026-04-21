@@ -102,7 +102,8 @@ export async function listCommand(options: ListCommandOptions): Promise<void> {
 
     // Apply filters
     if (options.tag) {
-      stashes = stashes.filter(s => s.tags.includes(options.tag!))
+      const tag = options.tag
+      stashes = stashes.filter(s => s.tags.includes(tag))
     }
     if (sinceDate) {
       stashes = stashes.filter(s => isAfter(s.timestamp, sinceDate))

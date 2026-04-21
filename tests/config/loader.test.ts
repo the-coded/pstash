@@ -129,7 +129,9 @@ describe("saveConfig", () => {
     vi.mocked(writeFile).mockResolvedValueOnce(undefined)
     await saveConfig(validConfig as Parameters<typeof saveConfig>[0])
     expect(writeFile).toHaveBeenCalledOnce()
-    const [, content] = vi.mocked(writeFile).mock.calls[0]!
+    const firstCall = vi.mocked(writeFile).mock.calls[0]
+    if (!firstCall) throw new Error("expected writeFile to be called")
+    const content = firstCall[1]
     const parsed = JSON.parse(content as string)
     expect(parsed.remote).toBe(validConfig.remote)
     expect(parsed.version).toBe(validConfig.version)
@@ -138,8 +140,9 @@ describe("saveConfig", () => {
   it("ends the written JSON with a newline", async () => {
     vi.mocked(writeFile).mockResolvedValueOnce(undefined)
     await saveConfig(validConfig as Parameters<typeof saveConfig>[0])
-    const [, content] = vi.mocked(writeFile).mock.calls[0]!
-    expect((content as string).endsWith("\n")).toBe(true)
+    const firstCall = vi.mocked(writeFile).mock.calls[0]
+    if (!firstCall) throw new Error("expected writeFile to be called")
+    expect((firstCall[1] as string).endsWith("\n")).toBe(true)
   })
 })
 
@@ -165,8 +168,9 @@ describe("updateConfig", () => {
     await updateConfig({ autoSync: false })
 
     expect(writeFile).toHaveBeenCalledOnce()
-    const [, content] = vi.mocked(writeFile).mock.calls[0]!
-    const written = JSON.parse(content as string)
+    const firstCall = vi.mocked(writeFile).mock.calls[0]
+    if (!firstCall) throw new Error("expected writeFile to be called")
+    const written = JSON.parse(firstCall[1] as string)
     expect(written.autoSync).toBe(false)
     expect(written.remote).toBe(validConfig.remote)
   })

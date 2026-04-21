@@ -113,9 +113,15 @@ function setConfigValue(config: GlobalConfig, key: string, rawValue: string): Gl
 
   let target: Record<string, unknown> = updated as unknown as Record<string, unknown>
   for (let i = 0; i < parts.length - 1; i++) {
-    target = target[parts[i]!] as Record<string, unknown>
+    const part = parts[i]
+    if (part === undefined) continue
+    target = target[part] as Record<string, unknown>
   }
-  target[parts[parts.length - 1]!] = parsedValue
+  const lastPart = parts[parts.length - 1]
+  if (lastPart === undefined) {
+    throw new Error(`Invalid config key: ${key}`)
+  }
+  target[lastPart] = parsedValue
 
   return updated
 }

@@ -6,55 +6,60 @@
 import { describe, it, expect } from "vitest"
 import { parseTimespec, isAfter, isBefore, timeAgo, formatTimestamp } from "../../src/utils/time.js"
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/**
+ * Asserts the result is a non-null Date and returns it.
+ * Used to avoid non-null assertions when parsing timespecs.
+ */
+function expectDate(value: Date | null): Date {
+  if (!value) throw new Error("expected Date, got null")
+  return value
+}
+
 // ─── parseTimespec ────────────────────────────────────────────────────────────
 
 describe("parseTimespec", () => {
   it('parses "7d" as approximately 7 days ago', () => {
     const now = new Date()
-    const result = parseTimespec("7d")
-    expect(result).not.toBeNull()
-    const diffDays = (now.getTime() - result!.getTime()) / (1000 * 60 * 60 * 24)
+    const result = expectDate(parseTimespec("7d"))
+    const diffDays = (now.getTime() - result.getTime()) / (1000 * 60 * 60 * 24)
     expect(diffDays).toBeCloseTo(7, 0)
   })
 
   it('parses "2w" as approximately 14 days ago', () => {
     const now = new Date()
-    const result = parseTimespec("2w")
-    expect(result).not.toBeNull()
-    const diffDays = (now.getTime() - result!.getTime()) / (1000 * 60 * 60 * 24)
+    const result = expectDate(parseTimespec("2w"))
+    const diffDays = (now.getTime() - result.getTime()) / (1000 * 60 * 60 * 24)
     expect(diffDays).toBeCloseTo(14, 0)
   })
 
   it('parses "1m" as approximately 1 month ago', () => {
     const now = new Date()
-    const result = parseTimespec("1m")
-    expect(result).not.toBeNull()
-    const diffDays = (now.getTime() - result!.getTime()) / (1000 * 60 * 60 * 24)
+    const result = expectDate(parseTimespec("1m"))
+    const diffDays = (now.getTime() - result.getTime()) / (1000 * 60 * 60 * 24)
     expect(diffDays).toBeGreaterThanOrEqual(28)
     expect(diffDays).toBeLessThanOrEqual(32)
   })
 
   it('parses "30d" as approximately 30 days ago', () => {
     const now = new Date()
-    const result = parseTimespec("30d")
-    expect(result).not.toBeNull()
-    const diffDays = (now.getTime() - result!.getTime()) / (1000 * 60 * 60 * 24)
+    const result = expectDate(parseTimespec("30d"))
+    const diffDays = (now.getTime() - result.getTime()) / (1000 * 60 * 60 * 24)
     expect(diffDays).toBeCloseTo(30, 0)
   })
 
   it('parses "2026-03-01" as a specific UTC date', () => {
-    const result = parseTimespec("2026-03-01")
-    expect(result).not.toBeNull()
-    expect(result!.getUTCFullYear()).toBe(2026)
-    expect(result!.getUTCMonth()).toBe(2) // March = 2 (0-indexed)
-    expect(result!.getUTCDate()).toBe(1)
+    const result = expectDate(parseTimespec("2026-03-01"))
+    expect(result.getUTCFullYear()).toBe(2026)
+    expect(result.getUTCMonth()).toBe(2) // March = 2 (0-indexed)
+    expect(result.getUTCDate()).toBe(1)
   })
 
   it("parses a full ISO datetime string", () => {
     const iso = "2026-03-12T01:05:00.000Z"
-    const result = parseTimespec(iso)
-    expect(result).not.toBeNull()
-    expect(result!.getTime()).toBe(new Date(iso).getTime())
+    const result = expectDate(parseTimespec(iso))
+    expect(result.getTime()).toBe(new Date(iso).getTime())
   })
 
   it('returns null for "invalid"', () => {
@@ -70,12 +75,10 @@ describe("parseTimespec", () => {
   })
 
   it("is case-insensitive for unit suffix", () => {
-    const lower = parseTimespec("7d")
-    const upper = parseTimespec("7D")
-    expect(lower).not.toBeNull()
-    expect(upper).not.toBeNull()
+    const lower = expectDate(parseTimespec("7d"))
+    const upper = expectDate(parseTimespec("7D"))
     // Should be within 1 second of each other
-    expect(Math.abs(lower!.getTime() - upper!.getTime())).toBeLessThan(1000)
+    expect(Math.abs(lower.getTime() - upper.getTime())).toBeLessThan(1000)
   })
 })
 

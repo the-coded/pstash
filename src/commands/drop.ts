@@ -101,7 +101,8 @@ export async function dropCommand(
     stashesToDrop = allStashes
   } else if (options.tag) {
     // Drop all stashes matching a tag
-    stashesToDrop = allStashes.filter(s => s.tags.includes(options.tag!))
+    const tag = options.tag
+    stashesToDrop = allStashes.filter(s => s.tags.includes(tag))
     if (stashesToDrop.length === 0) {
       console.log(chalk.yellow(`\n  No stashes found with tag: ${chalk.bold(options.tag)}\n`))
       return
@@ -197,9 +198,10 @@ export async function dropCommand(
   await indexer.onDelete(project, remainingStashes)
 
   // Git commit
+  const firstStash = stashesToDrop[0]
   const commitMsg =
-    stashesToDrop.length === 1
-      ? `drop(${project}): ${stashesToDrop[0]!.message}`
+    stashesToDrop.length === 1 && firstStash
+      ? `drop(${project}): ${firstStash.message}`
       : `drop(${project}): removed ${dropped} stashes`
 
   const commitSpinner = ora("Committing...").start()

@@ -115,7 +115,8 @@ export async function cleanCommand(options: CleanCommandOptions): Promise<void> 
 
     // Filter by tag
     if (options.tag) {
-      candidates = candidates.filter(s => s.tags.includes(options.tag!))
+      const tag = options.tag
+      candidates = candidates.filter(s => s.tags.includes(tag))
     }
 
     // Filter by --older-than

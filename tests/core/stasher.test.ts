@@ -117,7 +117,10 @@ describe("Stasher.listIds() and listMetadata()", () => {
 
     // Verify descending order (newest first)
     for (let i = 1; i < ids.length; i++) {
-      expect(ids[i - 1]! >= ids[i]!).toBe(true)
+      const prev = ids[i - 1]
+      const curr = ids[i]
+      if (prev === undefined || curr === undefined) throw new Error("unexpected undefined id")
+      expect(prev >= curr).toBe(true)
     }
   })
 
@@ -261,7 +264,9 @@ describe("Stasher — directory structure preservation", () => {
     })
 
     // Files outside cwd use basename fallback: stored as "api.md" not "docs/api.md"
-    expect(metadata.files[0]!.name).toBe("api.md")
+    const firstFile = metadata.files[0]
+    if (!firstFile) throw new Error("expected at least one file in metadata")
+    expect(firstFile.name).toBe("api.md")
 
     // Restore and verify file is at the destination root (basename behavior)
     const destDir = await mkdtemp(join(tmpdir(), "pstash-dest-"))

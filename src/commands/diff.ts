@@ -63,15 +63,19 @@ function computeDiff(a: string[], b: string[]): DiffEntry[] {
   const m = a.length
   const n = b.length
 
-  // Build LCS DP table (O(m*n) time and space)
-  const dp: number[][] = Array.from({ length: m + 1 }, () => new Array<number>(n + 1).fill(0))
+  // Build LCS DP table (O(m*n) time and space).
+  // Flat 1D array indexed as `i * (n + 1) + j` — avoids repeated bounds checks
+  // that `noUncheckedIndexedAccess` forces on nested arrays.
+  const width = n + 1
+  const dp: number[] = new Array<number>((m + 1) * width).fill(0)
+  const idx = (i: number, j: number): number => i * width + j
 
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
       if (a[i - 1] === b[j - 1]) {
-        dp[i]![j] = dp[i - 1]![j - 1]! + 1
+        dp[idx(i, j)] = (dp[idx(i - 1, j - 1)] ?? 0) + 1
       } else {
-        dp[i]![j] = Math.max(dp[i - 1]![j]!, dp[i]![j - 1]!)
+        dp[idx(i, j)] = Math.max(dp[idx(i - 1, j)] ?? 0, dp[idx(i, j - 1)] ?? 0)
       }
     }
   }
@@ -82,16 +86,27 @@ function computeDiff(a: string[], b: string[]): DiffEntry[] {
   let j = n
 
   while (i > 0 || j > 0) {
-    if (i > 0 && j > 0 && a[i - 1] === b[j - 1]) {
-      result.unshift({ type: "same", line: a[i - 1]! })
+    const ai = i > 0 ? a[i - 1] : undefined
+    const bj = j > 0 ? b[j - 1] : undefined
+
+    if (i > 0 && j > 0 && ai !== undefined && ai === bj) {
+      result.unshift({ type: "same", line: ai })
       i--
-      j--
-    } else if (j > 0 && (i === 0 || dp[i]![j - 1]! >= dp[i - 1]![j]!)) {
-      result.unshift({ type: "add", line: b[j - 1]! })
       j--
     } else {
-      result.unshift({ type: "remove", line: a[i - 1]! })
-      i--
+      const leftScore = j > 0 ? (dp[idx(i, j - 1)] ?? 0) : -1
+      const upScore = i > 0 ? (dp[idx(i - 1, j)] ?? 0) : -1
+
+      if (j > 0 && (i === 0 || leftScore >= upScore) && bj !== undefined) {
+        result.unshift({ type: "add", line: bj })
+        j--
+      } else if (i > 0 && ai !== undefined) {
+        result.unshift({ type: "remove", line: ai })
+        i--
+      } else {
+        // Unreachable given loop invariants, but satisfies exhaustiveness
+        break
+      }
     }
   }
 
@@ -136,7 +151,8 @@ function renderDiff(diff: DiffEntry[], fileNameA: string, fileNameB: string): st
     }
     prevVisible = k
 
-    const entry = diff[k]!
+    const entry = diff[k]
+    if (!entry) continue
     if (entry.type === "remove") {
       lines.push(chalk.red(`- ${entry.line}`))
     } else if (entry.type === "add") {

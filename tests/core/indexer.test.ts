@@ -12,7 +12,7 @@ import { join } from "node:path"
 import { Indexer } from "../../src/core/indexer.js"
 import { readJson } from "../../src/utils/fs.js"
 import { ProjectMetadataSchema } from "../../src/schemas.js"
-import type { StashMetadata } from "../../src/schemas.js"
+import type { StashMetadata, ProjectMetadata } from "../../src/schemas.js"
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -32,6 +32,11 @@ function makeStashMeta(overrides: Partial<StashMetadata> = {}): StashMetadata {
     commit: "abc123",
     ...overrides,
   }
+}
+
+function expectMeta(meta: ProjectMetadata | null): ProjectMetadata {
+  if (!meta) throw new Error("expected project metadata to be defined")
+  return meta
 }
 
 // ---------------------------------------------------------------------------
@@ -71,12 +76,11 @@ describe("Indexer", () => {
       const stash = makeStashMeta({ totalSize: 2048 })
       await indexer.onSave("proj-a", stash)
 
-      const meta = await indexer.load("proj-a")
-      expect(meta).not.toBeNull()
-      expect(meta!.name).toBe("proj-a")
-      expect(meta!.stashCount).toBe(1)
-      expect(meta!.createdAt).toBeTruthy()
-      expect(meta!.updatedAt).toBeTruthy()
+      const meta = expectMeta(await indexer.load("proj-a"))
+      expect(meta.name).toBe("proj-a")
+      expect(meta.stashCount).toBe(1)
+      expect(meta.createdAt).toBeTruthy()
+      expect(meta.updatedAt).toBeTruthy()
     })
 
     it("increments stashCount on subsequent saves", async () => {
@@ -88,8 +92,8 @@ describe("Indexer", () => {
       await indexer.onSave("proj-b", s2)
       await indexer.onSave("proj-b", s3)
 
-      const meta = await indexer.load("proj-b")
-      expect(meta!.stashCount).toBe(3)
+      const meta = expectMeta(await indexer.load("proj-b"))
+      expect(meta.stashCount).toBe(3)
     })
 
     it("accumulates totalSize across saves", async () => {
@@ -100,26 +104,26 @@ describe("Indexer", () => {
       await indexer.onSave("proj-c", s1)
       await indexer.onSave("proj-c", s2)
 
-      const meta = await indexer.load("proj-c")
+      const meta = expectMeta(await indexer.load("proj-c"))
       // Should be ~1 KB (1000 bytes)
-      expect(meta!.totalSize).toMatch(/kb/i)
+      expect(meta.totalSize).toMatch(/kb/i)
     })
 
     it("preserves createdAt and updates updatedAt on second save", async () => {
       const s1 = makeStashMeta({ id: "2025-01-15_10-00_a1" })
       await indexer.onSave("proj-d", s1)
-      const firstMeta = await indexer.load("proj-d")
+      const firstMeta = expectMeta(await indexer.load("proj-d"))
 
       // Small delay to ensure updatedAt differs
       await new Promise(r => setTimeout(r, 10))
 
       const s2 = makeStashMeta({ id: "2025-01-15_11-00_a2" })
       await indexer.onSave("proj-d", s2)
-      const secondMeta = await indexer.load("proj-d")
+      const secondMeta = expectMeta(await indexer.load("proj-d"))
 
-      expect(secondMeta!.createdAt).toBe(firstMeta!.createdAt)
+      expect(secondMeta.createdAt).toBe(firstMeta.createdAt)
       // updatedAt may equal createdAt if execution is too fast — just check it exists
-      expect(secondMeta!.updatedAt).toBeTruthy()
+      expect(secondMeta.updatedAt).toBeTruthy()
     })
 
     it("writes a valid .project.json that passes schema validation", async () => {
@@ -142,9 +146,9 @@ describe("Indexer", () => {
 
       await indexer.onDelete("proj-f", [])
 
-      const meta = await indexer.load("proj-f")
-      expect(meta!.stashCount).toBe(0)
-      expect(meta!.totalSize).toBe("0 B")
+      const meta = expectMeta(await indexer.load("proj-f"))
+      expect(meta.stashCount).toBe(0)
+      expect(meta.totalSize).toBe("0 B")
     })
 
     it("sets stashCount to the number of remaining stashes", async () => {
@@ -160,8 +164,8 @@ describe("Indexer", () => {
       // Delete s2 — remaining: s1, s3
       await indexer.onDelete("proj-g", [s1, s3])
 
-      const meta = await indexer.load("proj-g")
-      expect(meta!.stashCount).toBe(2)
+      const meta = expectMeta(await indexer.load("proj-g"))
+      expect(meta.stashCount).toBe(2)
     })
 
     it("recalculates totalSize from remaining stashes", async () => {
@@ -174,9 +178,9 @@ describe("Indexer", () => {
       // Keep only s1 (5000 B = 5 KB)
       await indexer.onDelete("proj-h", [s1])
 
-      const meta = await indexer.load("proj-h")
-      expect(meta!.stashCount).toBe(1)
-      expect(meta!.totalSize).toMatch(/kb/i)
+      const meta = expectMeta(await indexer.load("proj-h"))
+      expect(meta.stashCount).toBe(1)
+      expect(meta.totalSize).toMatch(/kb/i)
     })
 
     it("preserves remote and aliases from existing metadata", async () => {
@@ -196,19 +200,19 @@ describe("Indexer", () => {
       const remaining = [makeStashMeta({ id: "ccc1", totalSize: 3000 })]
       await indexer.onDelete("proj-i", remaining)
 
-      const meta = await indexer.load("proj-i")
-      expect(meta!.remote).toBe("git@github.com:user/proj-i.git")
-      expect(meta!.aliases).toEqual(["pi", "my-proj"])
-      expect(meta!.stashCount).toBe(1)
+      const meta = expectMeta(await indexer.load("proj-i"))
+      expect(meta.remote).toBe("git@github.com:user/proj-i.git")
+      expect(meta.aliases).toEqual(["pi", "my-proj"])
+      expect(meta.stashCount).toBe(1)
     })
 
     it("creates .project.json even if it didn't exist before", async () => {
       // onDelete called without a prior onSave (edge case)
       await indexer.onDelete("proj-j", [])
 
-      const meta = await indexer.load("proj-j")
-      expect(meta!.stashCount).toBe(0)
-      expect(meta!.name).toBe("proj-j")
+      const meta = expectMeta(await indexer.load("proj-j"))
+      expect(meta.stashCount).toBe(0)
+      expect(meta.name).toBe("proj-j")
     })
   })
 })

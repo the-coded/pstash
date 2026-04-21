@@ -15,7 +15,7 @@
  */
 
 import { copyFile, mkdir, mkdtemp, readFile, readdir, rm, stat } from "node:fs/promises"
-import { join, relative, dirname, basename, isAbsolute } from "node:path"
+import { join, relative, dirname, basename } from "node:path"
 import { tmpdir } from "node:os"
 import { createHash } from "node:crypto"
 import { userInfo, hostname } from "node:os"

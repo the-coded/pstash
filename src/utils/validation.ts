@@ -4,7 +4,7 @@
  * Zod validation helpers for safe I/O parsing.
  */
 
-import { z } from "zod"
+import { type z } from "zod"
 
 /**
  * Safely parse JSON from a string.
