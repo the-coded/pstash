@@ -83,6 +83,13 @@ vi.mock("../../src/utils/format.js", () => ({
   formatStashLine: vi.fn().mockReturnValue("[stash line]"),
 }))
 
+const promptsMocks = vi.hoisted(() => ({
+  promptInput: vi.fn(),
+  promptFilePatterns: vi.fn(),
+}))
+
+vi.mock("../../src/utils/prompts.js", () => promptsMocks)
+
 // ─── Imports (after mocks) ────────────────────────────────────────────────────
 
 import { globby } from "globby"
@@ -119,6 +126,8 @@ beforeEach(() => {
   vi.spyOn(console, "log").mockImplementation(() => undefined)
   loaderMocks.resolveLocalPath.mockReturnValue("/fake/repo")
   stasherMocks.save.mockResolvedValue(mockMetadata)
+  promptsMocks.promptInput.mockResolvedValue("prompted message")
+  promptsMocks.promptFilePatterns.mockResolvedValue(["prompted/*.md"])
 })
 
 // ─── autoSync behavior ────────────────────────────────────────────────────────
@@ -257,6 +266,69 @@ describe("saveCommand — stash content", () => {
 
     expect(stasherMocks.save).toHaveBeenCalledWith(
       expect.objectContaining({ project: "my-project" }),
+    )
+  })
+})
+
+// ─── Interactive mode ────────────────────────────────────────────────────────
+
+describe("saveCommand — interactive mode", () => {
+  it("prompts for both message and files when called with no args", async () => {
+    loaderMocks.loadConfig.mockResolvedValue(makeConfig({ autoSync: false }))
+    promptsMocks.promptInput.mockResolvedValue("interactive msg")
+    promptsMocks.promptFilePatterns.mockResolvedValue(["docs/**/*.md"])
+
+    await saveCommand(undefined, [], { tag: [] })
+
+    expect(promptsMocks.promptInput).toHaveBeenCalledOnce()
+    expect(promptsMocks.promptFilePatterns).toHaveBeenCalledOnce()
+    expect(stasherMocks.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: "interactive msg",
+        files: ["docs/**/*.md"],
+      }),
+    )
+  })
+
+  it("prompts only for files when message is given but files are missing", async () => {
+    loaderMocks.loadConfig.mockResolvedValue(makeConfig({ autoSync: false }))
+    promptsMocks.promptFilePatterns.mockResolvedValue(["notes.md"])
+
+    await saveCommand("my msg", [], { tag: [] })
+
+    expect(promptsMocks.promptInput).not.toHaveBeenCalled()
+    expect(promptsMocks.promptFilePatterns).toHaveBeenCalledOnce()
+    expect(stasherMocks.save).toHaveBeenCalledWith(
+      expect.objectContaining({ message: "my msg", files: ["notes.md"] }),
+    )
+  })
+
+  it("does not prompt for anything when all args are provided", async () => {
+    loaderMocks.loadConfig.mockResolvedValue(makeConfig({ autoSync: false }))
+
+    await saveCommand("my msg", ["*.md"], { tag: [] })
+
+    expect(promptsMocks.promptInput).not.toHaveBeenCalled()
+    expect(promptsMocks.promptFilePatterns).not.toHaveBeenCalled()
+  })
+
+  it("skips the files prompt when --unstaged is set even if files are empty", async () => {
+    loaderMocks.loadConfig.mockResolvedValue(makeConfig({ autoSync: false }))
+
+    // --unstaged takes precedence over the interactive prompt: it either
+    // stashes the detected unstaged files or returns early when there are
+    // none. Either way, promptFilePatterns must NOT be called.
+    await saveCommand("my msg", [], { tag: [], unstaged: true }).catch(() => undefined)
+
+    expect(promptsMocks.promptFilePatterns).not.toHaveBeenCalled()
+  })
+
+  it("throws when prompted message comes back empty", async () => {
+    loaderMocks.loadConfig.mockResolvedValue(makeConfig({ autoSync: false }))
+    promptsMocks.promptInput.mockResolvedValue("   ")
+
+    await expect(saveCommand(undefined, ["*.md"], { tag: [] })).rejects.toThrow(
+      "Message is required",
     )
   })
 })

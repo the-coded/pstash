@@ -27,6 +27,7 @@ import { Indexer } from "../core/indexer.js"
 import { GitManager } from "../core/git.js"
 import { removeFiles } from "../utils/fs.js"
 import { formatStashLine } from "../utils/format.js"
+import { promptInput, promptFilePatterns } from "../utils/prompts.js"
 import { globby } from "globby"
 
 export interface SaveCommandOptions {
@@ -52,8 +53,10 @@ export interface SaveCommandOptions {
 /**
  * Executes the `pstash save` command.
  *
- * @param message - Human-readable description of what was stashed
- * @param filePatterns - Glob patterns for files to stash (e.g. `["*.md", "src/*.ts"]`)
+ * @param message - Human-readable description of what was stashed.
+ *   If undefined, prompts interactively.
+ * @param filePatterns - Glob patterns for files to stash (e.g. `["*.md", "src/*.ts"]`).
+ *   If empty (and `--unstaged` is not set), prompts interactively.
  * @param options - Command flags and overrides
  *
  * @throws {Error} If no files match the provided patterns
@@ -61,13 +64,26 @@ export interface SaveCommandOptions {
  * @throws {Error} If git push fails and `--no-sync` is not set
  */
 export async function saveCommand(
-  message: string,
+  message: string | undefined,
   filePatterns: string[],
   options: SaveCommandOptions,
 ): Promise<void> {
   const config = await loadConfig()
   const repoPath = resolveLocalPath(config.localPath)
   const git = new GitManager(repoPath)
+
+  // Interactive prompts for missing args (flags are never prompted).
+  let resolvedMessage = message
+  if (!resolvedMessage) {
+    resolvedMessage = (await promptInput("What are you stashing?")).trim()
+    if (!resolvedMessage) {
+      throw new Error("Message is required.")
+    }
+  }
+  let resolvedFilePatterns = filePatterns
+  if (resolvedFilePatterns.length === 0 && !options.unstaged) {
+    resolvedFilePatterns = await promptFilePatterns()
+  }
 
   // Auto pull before saving (ensures we have the latest stashes from other machines)
   if (config.autoSync && !options.noSync) {
@@ -92,7 +108,7 @@ export async function saveCommand(
   const commit = await detector.getCurrentCommit()
 
   // Resolve file patterns — use git unstaged files if --unstaged is set
-  let resolvedPatterns = filePatterns
+  let resolvedPatterns = resolvedFilePatterns
   if (options.unstaged) {
     const projectGit = simpleGit(process.cwd())
     let status
@@ -121,7 +137,7 @@ export async function saveCommand(
 
     metadata = await stasher.save({
       project,
-      message,
+      message: resolvedMessage,
       files: resolvedPatterns,
       tags: options.tag ?? [],
       branch,
@@ -144,7 +160,7 @@ export async function saveCommand(
   // Git commit
   const gitSpinner = ora("Committing...").start()
   try {
-    await git.commitAll(`stash(${project}): ${message}`)
+    await git.commitAll(`stash(${project}): ${resolvedMessage}`)
     gitSpinner.succeed(chalk.green("Committed"))
   } catch (err) {
     gitSpinner.fail(chalk.red("Commit failed"))
@@ -172,7 +188,7 @@ export async function saveCommand(
         : (config.defaults.removeAfterSave ?? false)
 
   if (shouldRemove) {
-    const resolvedFiles = await globby(filePatterns, {
+    const resolvedFiles = await globby(resolvedFilePatterns, {
       cwd: process.cwd(),
       absolute: true,
       dot: true,

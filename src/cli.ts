@@ -103,8 +103,11 @@ async function createProgram(): Promise<Command> {
   // ─── pstash save ──────────────────────────────────────────────────────────
 
   program
-    .command("save <message> [files...]")
-    .description("Stash files with a message")
+    .command("save [message] [files...]")
+    .description(
+      "Stash files with a message.\n" +
+        "  If <message> and [files...] are both omitted, runs in interactive mode.",
+    )
     .option("-t, --tag <tag>", "Add tag (repeatable)", (val: string, prev: string[]) => [...prev, val], [] as string[])
     .option("-p, --project <name>", "Override auto-detected project name")
     .option("--no-sync", "Skip auto pull+push for this operation")
@@ -113,7 +116,7 @@ async function createProgram(): Promise<Command> {
     .option("--compress", "Compress stash as tar.gz (overrides config defaults.compression)")
     .option("--unstaged", "Auto-detect unstaged git files and stash them (ignores [files...] patterns)")
     .action(
-      withErrorHandling((message: string, files: string[], opts) =>
+      withErrorHandling((message: string | undefined, files: string[], opts) =>
         saveCommand(message, files, {
           tag: opts.tag as string[],
           project: opts.project as string | undefined,
