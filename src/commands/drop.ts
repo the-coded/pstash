@@ -34,7 +34,7 @@ import { ProjectDetector } from "../core/detector.js"
 import { Stasher } from "../core/stasher.js"
 import { Indexer } from "../core/indexer.js"
 import { GitManager } from "../core/git.js"
-import { confirmAction, selectStash } from "../utils/prompts.js"
+import { confirmAction, selectStashes } from "../utils/prompts.js"
 import { formatStashLine } from "../utils/format.js"
 import type { StashMetadata } from "../schemas.js"
 
@@ -117,9 +117,8 @@ export async function dropCommand(
     }
     stashesToDrop = [s]
   } else {
-    // Interactive selection
-    const result = await selectStash(allStashes, "Select a stash to drop:")
-    stashesToDrop = [result.stash]
+    // Interactive multi-select (space to toggle, enter to confirm)
+    stashesToDrop = await selectStashes(allStashes, "Select stashes to drop:")
   }
 
   // Show what will be dropped

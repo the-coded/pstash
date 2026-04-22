@@ -4,7 +4,7 @@
  * Interactive CLI prompts using @inquirer/prompts.
  */
 
-import { select, confirm, input } from "@inquirer/prompts"
+import { select, confirm, input, checkbox } from "@inquirer/prompts"
 import type { StashMetadata } from "../schemas.js"
 import { formatStashChoice } from "./format.js"
 
@@ -34,6 +34,38 @@ export async function selectStash(
   if (!stash) throw new Error("Invalid selection.")
 
   return { stash, index: selectedIndex }
+}
+
+/**
+ * Shows an interactive multi-select stash picker.
+ * Requires at least one selection. Returns the selected stashes in input order.
+ */
+export async function selectStashes(
+  stashes: StashMetadata[],
+  message = "Select stashes (space to toggle, enter to confirm):",
+): Promise<StashMetadata[]> {
+  if (stashes.length === 0) {
+    throw new Error("No stashes available.")
+  }
+
+  const choices = stashes.map((stash, index) => ({
+    name: formatStashChoice(stash, index),
+    value: index,
+  }))
+
+  const selectedIndices = await checkbox({
+    message,
+    choices,
+    required: true,
+  })
+
+  const result: StashMetadata[] = []
+  for (const i of selectedIndices) {
+    const s = stashes[i]
+    if (!s) throw new Error(`Invalid selection: index ${i} out of range`)
+    result.push(s)
+  }
+  return result
 }
 
 /**
