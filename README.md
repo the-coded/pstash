@@ -121,6 +121,10 @@ This clones the repo to `~/.pstash` and creates `~/.pstashrc`.
 ### 3. Stash some files
 
 ```bash
+# Fully interactive — prompts for a message, then a checkbox picker of
+# unstaged/untracked files (with an "➕ Add custom glob pattern..." entry)
+pstash save
+
 # Stash all markdown files in current directory
 pstash save "planning notes" *.md
 
@@ -162,7 +166,7 @@ pstash apply 1          # restore without deleting
 | [`apply`](#apply) | Restore stash files **without deleting** the stash |
 | [`sync`](#sync) | Manually synchronize the stash repo (pull + push) |
 | [`show`](#show) | Show details or file contents of a stash entry |
-| [`drop`](#drop) | Delete a stash entry without restoring its files |
+| [`drop`](#drop) | Delete one or more stash entries without restoring files |
 | [`status`](#status) | Show stash repository status and per-project summary |
 | [`clean`](#clean) | Bulk-remove old or filtered stash entries |
 | [`diff`](#diff) | Compare two stashes, or a stash against the current working directory |
@@ -196,7 +200,7 @@ pstash init -r https://github.com/you/my-stash.git --path ~/stash
 Stash files with a message. Files are copied to the data repo, committed, and synced (pull before + push after) when `autoSync` is enabled.
 
 ```bash
-pstash save [options] <message> [files...]
+pstash save [options] [message] [files...]
 ```
 
 | Option | Description |
@@ -209,8 +213,20 @@ pstash save [options] <message> [files...]
 | `--keep` | Keep source files (overrides `defaults.removeAfterSave=true`) |
 | `--unstaged` | Auto-detect unstaged git files (modified + untracked) and stash them — ignores `[files...]` |
 
+**Interactive mode:**
+
+If `[message]` and `[files...]` are both omitted, `save` runs interactively:
+
+1. Prompts for a message (`"What are you stashing?"`)
+2. Shows a **checkbox picker** of your git unstaged + untracked files (space to toggle, enter to confirm)
+3. Offers an `➕ Add custom glob pattern...` entry where you can type space-separated globs (e.g. `docs/*.md src/**/*.ts`)
+
+Flags still work alongside the prompts — for example `pstash save --rm` runs interactively and then removes the source files. Passing `--unstaged` skips the picker and auto-detects the file list.
+
 **Examples:**
 ```bash
+pstash save                  # fully interactive (prompts message + file picker)
+pstash save --rm             # interactive + remove source files afterwards
 pstash save "planning notes" *.md
 pstash save -t api -t draft "openapi spec" openapi.yaml
 pstash save --rm "WIP code" src/experiment.ts
@@ -376,14 +392,15 @@ pstash drop [options] [index]
 | `-a, --all` | Drop all stashes in the current project (requires confirmation) |
 | `--force` | Skip confirmation prompt |
 | `--dry-run` | Preview what would be deleted |
-| `[index]` | 0-based index. If omitted: interactive selector |
+| `[index]` | 0-based index. If omitted: interactive **multi-select** picker (space to toggle, enter to confirm) |
 
 **Examples:**
 ```bash
-pstash drop 0             # drop newest (with confirmation)
-pstash drop 0 --force     # drop without asking
-pstash drop -t wip        # drop all WIP stashes
-pstash drop --all         # drop everything (double-confirm)
+pstash drop                   # interactive multi-select (space toggles, enter confirms)
+pstash drop 0                 # drop newest (with confirmation)
+pstash drop 0 --force         # drop without asking
+pstash drop -t wip            # drop all WIP stashes
+pstash drop --all             # drop everything (double-confirm)
 pstash drop --all --dry-run   # preview only
 ```
 
