@@ -33,8 +33,7 @@ import { ProjectDetector } from "../core/detector.js"
 import { GitManager } from "../core/git.js"
 import { Stasher } from "../core/stasher.js"
 import { exists } from "../utils/fs.js"
-import { formatStashLine } from "../utils/format.js"
-import { selectStash } from "../utils/prompts.js"
+import { selectDiffTarget, selectStash } from "../utils/prompts.js"
 import type { StashMetadata } from "../schemas.js"
 
 export interface DiffCommandOptions {
@@ -387,25 +386,15 @@ export async function diffCommand(
   let stashB: StashMetadata | null = null
 
   if (indexA === undefined) {
-    // Interactive: select stash A
-    console.log()
-    console.log(chalk.bold.cyan(`  Select stash A (before):`))
-    const resultA = await selectStash(stashes, "Select stash A:")
+    // Interactive: select stash A, then choose cwd or another stash as target.
+    const resultA = await selectStash(stashes, "Select stash A (before):")
     stashA = resultA.stash
 
     if (stashes.length > 1) {
-      // Offer to select stash B or compare to cwd
       const otherStashes = stashes.filter(s => s.id !== stashA.id)
-      console.log()
-      console.log(chalk.bold.cyan(`  Compare against:`))
-      console.log(`  [0] Current working directory (cwd)`)
-      for (const [i, s] of otherStashes.entries()) {
-        console.log(`  [${i + 1}] ${formatStashLine(s, i + 1)}`)
-      }
-      console.log()
-      // Default to cwd for simplicity
+      stashB = await selectDiffTarget(otherStashes)
     }
-    // stashB remains null (compare to cwd)
+    // With only 1 stash available, stashB stays null → compare against cwd.
   } else {
     // Select by index
     const sa = stashes[indexA]

@@ -473,12 +473,19 @@ pstash diff [options] [indexA] [indexB]
 | `-p, --project <name>` | Override auto-detected project name |
 | `--files <pattern>` | Limit diff to files matching this glob pattern |
 | `--stat` | Show only changed file names (no inline diff) |
-| `[indexA]` | First stash index (default: interactive selector) |
+| `[indexA]` | First stash index. If omitted: interactive selector |
 | `[indexB]` | Second stash index — omit to compare against cwd |
+
+**Interactive mode:**
+
+If `[indexA]` is omitted, `diff` runs interactively:
+
+1. Prompts you to pick stash **A** (the "before" side)
+2. Prompts you to pick the comparison target — either the current working directory (cwd) or another stash (skipped when only one stash exists)
 
 **Examples:**
 ```bash
-pstash diff             # interactive selection
+pstash diff             # interactive: pick stash A, then cwd or another stash
 pstash diff 0 1         # compare two stashes
 pstash diff 0           # compare stash 0 with cwd
 pstash diff 0 1 --files "*.ts"   # limit to TypeScript files

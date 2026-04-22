@@ -77,6 +77,40 @@ export async function confirmAction(message: string): Promise<boolean> {
 }
 
 /**
+ * Sentinel value for "compare against current working directory" in diff prompts.
+ */
+export const DIFF_TARGET_CWD = "__pstash_diff_cwd__"
+
+/**
+ * Shows a select prompt asking what to compare a stash against:
+ * either the current working directory (cwd) or another stash.
+ *
+ * @param otherStashes - Candidate stashes to compare against (already excluding stash A)
+ * @returns The selected stash, or `null` if the user picked "cwd"
+ */
+export async function selectDiffTarget(
+  otherStashes: StashMetadata[],
+): Promise<StashMetadata | null> {
+  const choices = [
+    { name: "Current working directory (cwd)", value: DIFF_TARGET_CWD },
+    ...otherStashes.map((stash, index) => ({
+      name: formatStashChoice(stash, index),
+      value: stash.id,
+    })),
+  ]
+
+  const choice = await select({
+    message: "Compare against:",
+    choices,
+  })
+
+  if (choice === DIFF_TARGET_CWD) return null
+  const selected = otherStashes.find(s => s.id === choice)
+  if (!selected) throw new Error("Invalid diff target selection.")
+  return selected
+}
+
+/**
  * Prompts for a text input.
  */
 export async function promptInput(message: string, defaultValue?: string): Promise<string> {
