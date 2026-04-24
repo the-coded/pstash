@@ -5,7 +5,12 @@
 
 import { describe, it, expect } from "vitest"
 import { z } from "zod"
-import { safeParseJson, parseJsonWithSchema, validateWithSchema, isValid } from "../../src/utils/validation.js"
+import {
+  safeParseJson,
+  parseJsonWithSchema,
+  validateWithSchema,
+  isValid,
+} from "../../src/utils/validation.js"
 
 // ─── Test schema ─────────────────────────────────────────────────────────────
 
@@ -23,7 +28,7 @@ describe("safeParseJson", () => {
   })
 
   it("returns parsed array for valid JSON array", () => {
-    const result = safeParseJson('[1, 2, 3]')
+    const result = safeParseJson("[1, 2, 3]")
     expect(result).toEqual([1, 2, 3])
   })
 
@@ -66,9 +71,9 @@ describe("parseJsonWithSchema", () => {
   })
 
   it("includes context in validation error when provided", () => {
-    expect(() =>
-      parseJsonWithSchema('{"name": "A", "age": -1}', UserSchema, "user.json"),
-    ).toThrow("for user.json")
+    expect(() => parseJsonWithSchema('{"name": "A", "age": -1}', UserSchema, "user.json")).toThrow(
+      "for user.json",
+    )
   })
 
   it("throws on negative age (schema constraint)", () => {

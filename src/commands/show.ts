@@ -151,7 +151,9 @@ export async function showCommand(
     for (const file of filesToCat) {
       const filePath = join(repoPath, project, selectedStash.id, file.name)
 
-      console.log(chalk.bold.cyan(`── ${file.name} ${"─".repeat(Math.max(0, 60 - file.name.length))}`))
+      console.log(
+        chalk.bold.cyan(`── ${file.name} ${"─".repeat(Math.max(0, 60 - file.name.length))}`),
+      )
       console.log()
 
       try {

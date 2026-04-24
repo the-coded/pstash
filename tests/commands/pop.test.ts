@@ -206,9 +206,7 @@ describe("popCommand — restore options", () => {
 
     await popCommand(0, { force: true })
 
-    expect(stasherMocks.restore).toHaveBeenCalledWith(
-      expect.objectContaining({ force: true }),
-    )
+    expect(stasherMocks.restore).toHaveBeenCalledWith(expect.objectContaining({ force: true }))
   })
 })
 

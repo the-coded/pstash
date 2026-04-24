@@ -159,10 +159,7 @@ export async function statusCommand(options: StatusCommandOptions): Promise<void
 
   // Repo health
   if (!repoExists) {
-    console.log(
-      chalk.yellow("  ⚠  Stash repo not initialized.") +
-        chalk.dim(" Run: pstash init"),
-    )
+    console.log(chalk.yellow("  ⚠  Stash repo not initialized.") + chalk.dim(" Run: pstash init"))
     console.log()
     return
   }
@@ -189,8 +186,7 @@ export async function statusCommand(options: StatusCommandOptions): Promise<void
     return
   }
 
-  const header =
-    `  ${"PROJECT".padEnd(24)}  ${"STASHES".padStart(7)}  ${"SIZE".padStart(10)}  UPDATED`
+  const header = `  ${"PROJECT".padEnd(24)}  ${"STASHES".padStart(7)}  ${"SIZE".padStart(10)}  UPDATED`
   console.log(chalk.dim(header))
   console.log(chalk.dim("  " + "─".repeat(60)))
 

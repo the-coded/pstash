@@ -13,7 +13,13 @@ vi.mock("node:fs/promises", () => ({
 }))
 
 import { readFile, writeFile, access } from "node:fs/promises"
-import { resolveLocalPath, configExists, loadConfig, saveConfig, updateConfig } from "../../src/config/loader.js"
+import {
+  resolveLocalPath,
+  configExists,
+  loadConfig,
+  saveConfig,
+  updateConfig,
+} from "../../src/config/loader.js"
 import { homedir } from "node:os"
 
 const validConfig = {
@@ -105,7 +111,9 @@ describe("loadConfig", () => {
   })
 
   it("throws with 'Config file not found' when file is missing", async () => {
-    vi.mocked(readFile).mockRejectedValueOnce(Object.assign(new Error("ENOENT"), { code: "ENOENT" }))
+    vi.mocked(readFile).mockRejectedValueOnce(
+      Object.assign(new Error("ENOENT"), { code: "ENOENT" }),
+    )
     await expect(loadConfig()).rejects.toThrow("Config file not found")
   })
 
@@ -179,7 +187,9 @@ describe("updateConfig", () => {
     vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify(validConfig))
 
     // Setting remote to empty string should fail Zod validation (min length 1)
-    await expect(updateConfig({ remote: "" } as Parameters<typeof updateConfig>[0])).rejects.toThrow()
+    await expect(
+      updateConfig({ remote: "" } as Parameters<typeof updateConfig>[0]),
+    ).rejects.toThrow()
   })
 
   it("returns the validated merged config", async () => {
@@ -195,7 +205,9 @@ describe("updateConfig", () => {
   })
 
   it("throws if the existing config cannot be loaded", async () => {
-    vi.mocked(readFile).mockRejectedValueOnce(Object.assign(new Error("ENOENT"), { code: "ENOENT" }))
+    vi.mocked(readFile).mockRejectedValueOnce(
+      Object.assign(new Error("ENOENT"), { code: "ENOENT" }),
+    )
 
     await expect(updateConfig({ autoSync: false })).rejects.toThrow("Config file not found")
   })

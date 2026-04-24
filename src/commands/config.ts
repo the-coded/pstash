@@ -150,7 +150,12 @@ function printConfigTable(config: GlobalConfig): void {
 
   for (const [key, value] of rows) {
     const padded = key.padEnd(maxKeyLen)
-    const coloredValue = value === "true" ? chalk.green(value) : value === "false" ? chalk.red(value) : chalk.white(value)
+    const coloredValue =
+      value === "true"
+        ? chalk.green(value)
+        : value === "false"
+          ? chalk.red(value)
+          : chalk.white(value)
     console.log(`  ${chalk.dim(padded)}  ${coloredValue}`)
   }
 
@@ -191,10 +196,7 @@ export async function configCommand(
 
     const newValue = getConfigValue(updated, key)
     console.log()
-    console.log(
-      `  ${chalk.dim(key)} = ${chalk.green(String(newValue))}` +
-        chalk.dim("  (saved)"),
-    )
+    console.log(`  ${chalk.dim(key)} = ${chalk.green(String(newValue))}` + chalk.dim("  (saved)"))
     console.log()
     return
   }

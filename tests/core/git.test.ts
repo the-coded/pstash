@@ -76,10 +76,7 @@ describe("GitManager", () => {
 
       await manager.clone("git@github.com:user/stash.git", "/tmp/my-stash")
 
-      expect(mockGit.clone).toHaveBeenCalledWith(
-        "git@github.com:user/stash.git",
-        "/tmp/my-stash",
-      )
+      expect(mockGit.clone).toHaveBeenCalledWith("git@github.com:user/stash.git", "/tmp/my-stash")
     })
 
     it("propagates errors from git.clone", async () => {
@@ -141,11 +138,7 @@ describe("GitManager", () => {
       await manager.push()
 
       expect(mockGit.push).toHaveBeenCalledTimes(2)
-      expect(mockGit.push).toHaveBeenLastCalledWith([
-        "--set-upstream",
-        "origin",
-        "HEAD",
-      ])
+      expect(mockGit.push).toHaveBeenLastCalledWith(["--set-upstream", "origin", "HEAD"])
     })
 
     it("propagates error if both push attempts fail", async () => {
@@ -279,10 +272,7 @@ describe("GitManager", () => {
 
       await manager.removeAndCommit("my-project/2026-01-15_10-00_abcd", "drop: remove stash")
 
-      expect(mockGit.rm).toHaveBeenCalledWith([
-        "-r",
-        "my-project/2026-01-15_10-00_abcd",
-      ])
+      expect(mockGit.rm).toHaveBeenCalledWith(["-r", "my-project/2026-01-15_10-00_abcd"])
       expect(mockGit.commit).toHaveBeenCalledWith("drop: remove stash")
     })
 
@@ -290,9 +280,9 @@ describe("GitManager", () => {
       const mockGit = await getMockGit()
       mockGit.rm.mockRejectedValue(new Error("path not found"))
 
-      await expect(
-        manager.removeAndCommit("nonexistent/path", "drop: remove"),
-      ).rejects.toThrow("path not found")
+      await expect(manager.removeAndCommit("nonexistent/path", "drop: remove")).rejects.toThrow(
+        "path not found",
+      )
     })
   })
 })

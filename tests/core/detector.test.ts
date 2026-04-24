@@ -49,7 +49,10 @@ function makeConfig(
     localPath: "~/.pstash",
     autoSync: true,
     projects: Object.fromEntries(
-      Object.entries(projects).map(([name, cfg]) => [name, { aliases: cfg.aliases, remote: cfg.remote }]),
+      Object.entries(projects).map(([name, cfg]) => [
+        name,
+        { aliases: cfg.aliases, remote: cfg.remote },
+      ]),
     ),
     defaults: {
       keepOnPop: false,

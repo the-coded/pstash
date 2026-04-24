@@ -159,10 +159,7 @@ describe("dropCommand — interactive multi-select", () => {
 
   it("uses a plural commit message when multiple stashes are dropped", async () => {
     loaderMocks.loadConfig.mockResolvedValue(makeConfig())
-    promptsMocks.selectStashes.mockResolvedValue([
-      makeStash("stash-001"),
-      makeStash("stash-002"),
-    ])
+    promptsMocks.selectStashes.mockResolvedValue([makeStash("stash-001"), makeStash("stash-002")])
 
     await dropCommand(undefined, { force: true })
 

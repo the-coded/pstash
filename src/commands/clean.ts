@@ -187,7 +187,9 @@ export async function cleanCommand(options: CleanCommandOptions): Promise<void> 
   }
 
   // Delete stashes
-  const spinner = ora(`Cleaning ${toDelete.length} stash${toDelete.length !== 1 ? "es" : ""}...`).start()
+  const spinner = ora(
+    `Cleaning ${toDelete.length} stash${toDelete.length !== 1 ? "es" : ""}...`,
+  ).start()
   let removed = 0
   const affectedProjects = new Set<string>()
 

@@ -236,9 +236,7 @@ describe("Stasher.delete()", () => {
   })
 
   it("does not throw when deleting a non-existent stash", async () => {
-    await expect(
-      stasher.delete("nonexistent-project", "nonexistent-id"),
-    ).resolves.not.toThrow()
+    await expect(stasher.delete("nonexistent-project", "nonexistent-id")).resolves.not.toThrow()
   })
 })
 

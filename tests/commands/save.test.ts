@@ -255,7 +255,11 @@ describe("saveCommand — stash content", () => {
     await saveCommand("my docs", ["*.md"], { tag: ["docs", "wip"], project: "custom-proj" })
 
     expect(stasherMocks.save).toHaveBeenCalledWith(
-      expect.objectContaining({ project: "custom-proj", message: "my docs", tags: ["docs", "wip"] }),
+      expect.objectContaining({
+        project: "custom-proj",
+        message: "my docs",
+        tags: ["docs", "wip"],
+      }),
     )
   })
 

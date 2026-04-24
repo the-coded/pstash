@@ -282,7 +282,9 @@ async function showDiff(
       : await readCwdFileLines(fileName)
 
     if (!linesA || !linesB) {
-      console.log(chalk.bold(`  ${chalk.yellow("?")} ${fileName}`) + chalk.dim(" (binary or unreadable)"))
+      console.log(
+        chalk.bold(`  ${chalk.yellow("?")} ${fileName}`) + chalk.dim(" (binary or unreadable)"),
+      )
       continue
     }
 

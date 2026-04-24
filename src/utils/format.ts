@@ -44,10 +44,7 @@ export function formatStashChoice(stash: StashMetadata, index: number): string {
  * Formats the stash metadata block for `pstash show`.
  */
 export function formatStashDetails(stash: StashMetadata, project: string): string {
-  const lines: string[] = [
-    `Stash: ${project}/${stash.id}`,
-    `Message: ${stash.message}`,
-  ]
+  const lines: string[] = [`Stash: ${project}/${stash.id}`, `Message: ${stash.message}`]
 
   if (stash.tags.length > 0) {
     lines.push(`Tags: ${stash.tags.join(", ")}`)
