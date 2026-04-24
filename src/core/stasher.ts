@@ -84,55 +84,13 @@ export class Stasher {
     const stashDir = join(this.stashRepoPath, options.project, id)
     await mkdir(stashDir, { recursive: true })
 
-    // Resolve file patterns using globby (cross-platform glob)
-    const resolvedFiles = await globby(options.files, {
-      cwd: process.cwd(),
-      absolute: true,
-      dot: true,
-      onlyFiles: true,
-    })
-
-    if (resolvedFiles.length === 0) {
-      // Clean up empty dir
+    let written
+    try {
+      written = await this.writeStashContents(stashDir, options.files, options.compress === true)
+    } catch (err) {
+      // Clean up empty dir on failure
       await rm(stashDir, { recursive: true, force: true })
-      throw new Error(`No files matched the patterns: ${options.files.join(", ")}`)
-    }
-
-    // Copy files and generate SHA-256 hashes
-    const fileMetadata: StashMetadata["files"] = []
-    const copiedFileNames: string[] = []
-    let totalSize = 0
-
-    for (const filePath of resolvedFiles) {
-      // Preserve relative path from cwd so directory structure is restored correctly.
-      // e.g. "@todo/PROGRESS.md" instead of just "PROGRESS.md".
-      // Falls back to basename when the file is outside cwd (e.g. absolute path to /tmp/...).
-      const rel = relative(process.cwd(), filePath)
-      const relativePath = rel.startsWith("..") ? basename(filePath) : rel
-      const dest = join(stashDir, relativePath)
-
-      // Ensure subdirectory exists inside stash dir before copying
-      await mkdir(dirname(dest), { recursive: true })
-      await copyFile(filePath, dest)
-
-      const content = await readFile(filePath)
-      const fileStats = await stat(filePath)
-      // Short hash (12 hex chars = 48 bits) — sufficient for integrity checking
-      const hash = `sha256:${createHash("sha256").update(content).digest("hex").slice(0, 12)}`
-
-      fileMetadata.push({
-        name: relativePath,
-        size: fileStats.size,
-        hash,
-      })
-      copiedFileNames.push(relativePath)
-      totalSize += fileStats.size
-    }
-
-    // Compress if requested (Phase 3 feature)
-    const isCompressed = options.compress === true
-    if (isCompressed) {
-      await compress(stashDir, copiedFileNames)
+      throw err
     }
 
     // Create and validate metadata
@@ -146,14 +104,154 @@ export class Stasher {
       branch: options.branch,
       commit: options.commit,
       user: `${userInfo().username}@${hostname()}`,
-      files: fileMetadata,
-      totalSize,
-      compressed: isCompressed,
+      files: written.fileMetadata,
+      totalSize: written.totalSize,
+      compressed: written.isCompressed,
     })
 
     await writeJson(join(stashDir, ".stash.json"), metadata)
 
     return metadata
+  }
+
+  /**
+   * Replaces the contents of an existing stash with a new set of files.
+   *
+   * Unlike `save()`, this keeps the stash `id` and original `timestamp` intact,
+   * but sets `updatedAt` to now. The stash directory is emptied before the new
+   * files are written, so the stash is a full replacement (not a merge).
+   *
+   * @param options.project - Project name
+   * @param options.stashId - ID of the stash to update
+   * @param options.files - New file patterns to stash (replaces existing files)
+   * @param options.message - Optional new message (defaults to the existing message)
+   * @param options.tags - Optional new tags (defaults to existing tags)
+   * @param options.branch - Git branch at update time
+   * @param options.commit - Git commit hash at update time
+   * @param options.compress - If true, compress the new contents as tar.gz
+   * @returns Validated stash metadata for the updated stash
+   *
+   * @throws {Error} If the target stash does not exist
+   * @throws {Error} If no files match the provided patterns
+   */
+  async update(options: {
+    project: string
+    stashId: string
+    files: string[]
+    message?: string
+    tags?: string[]
+    branch?: string
+    commit?: string
+    compress?: boolean
+  }): Promise<StashMetadata> {
+    const stashDir = join(this.stashRepoPath, options.project, options.stashId)
+
+    if (!(await exists(stashDir))) {
+      throw new Error(`Stash not found: ${options.project}/${options.stashId}`)
+    }
+
+    // Load existing metadata to preserve id/timestamp/message/tags defaults
+    const existing = await this.loadMetadata(options.project, options.stashId)
+
+    // Empty the stash directory (replace semantics) but keep the dir itself
+    const entries = await readdir(stashDir)
+    for (const entry of entries) {
+      await rm(join(stashDir, entry), { recursive: true, force: true })
+    }
+
+    // If writeStashContents throws (e.g. no files matched), the stash dir
+    // is left empty — the caller is responsible for deciding next steps
+    // (typically: restore from git or drop the stash).
+    const written = await this.writeStashContents(
+      stashDir,
+      options.files,
+      options.compress === true,
+    )
+
+    const metadata = StashMetadataSchema.parse({
+      id: existing.id,
+      project: options.project,
+      timestamp: existing.timestamp,
+      updatedAt: new Date().toISOString(),
+      message: options.message ?? existing.message,
+      tags: options.tags ?? existing.tags,
+      branch: options.branch,
+      commit: options.commit,
+      user: `${userInfo().username}@${hostname()}`,
+      files: written.fileMetadata,
+      totalSize: written.totalSize,
+      compressed: written.isCompressed,
+    })
+
+    await writeJson(join(stashDir, ".stash.json"), metadata)
+
+    return metadata
+  }
+
+  /**
+   * Copies resolved files into a stash directory, computes hashes, and
+   * optionally compresses the result. Shared between `save()` and `update()`.
+   *
+   * @param stashDir - Absolute path to the (empty) target stash directory
+   * @param filePatterns - Glob patterns relative to `process.cwd()`
+   * @param shouldCompress - Whether to compress into `stash.tar.gz` after copying
+   *
+   * @throws {Error} If no files match the provided patterns
+   */
+  private async writeStashContents(
+    stashDir: string,
+    filePatterns: string[],
+    shouldCompress: boolean,
+  ): Promise<{
+    fileMetadata: StashMetadata["files"]
+    totalSize: number
+    isCompressed: boolean
+  }> {
+    // Resolve file patterns using globby (cross-platform glob)
+    const resolvedFiles = await globby(filePatterns, {
+      cwd: process.cwd(),
+      absolute: true,
+      dot: true,
+      onlyFiles: true,
+    })
+
+    if (resolvedFiles.length === 0) {
+      throw new Error(`No files matched the patterns: ${filePatterns.join(", ")}`)
+    }
+
+    const fileMetadata: StashMetadata["files"] = []
+    const copiedFileNames: string[] = []
+    let totalSize = 0
+
+    for (const filePath of resolvedFiles) {
+      // Preserve relative path from cwd so directory structure is restored correctly.
+      // e.g. "@todo/PROGRESS.md" instead of just "PROGRESS.md".
+      // Falls back to basename when the file is outside cwd (e.g. absolute path to /tmp/...).
+      const rel = relative(process.cwd(), filePath)
+      const relativePath = rel.startsWith("..") ? basename(filePath) : rel
+      const dest = join(stashDir, relativePath)
+
+      await mkdir(dirname(dest), { recursive: true })
+      await copyFile(filePath, dest)
+
+      const content = await readFile(filePath)
+      const fileStats = await stat(filePath)
+      const hash = `sha256:${createHash("sha256").update(content).digest("hex").slice(0, 12)}`
+
+      fileMetadata.push({
+        name: relativePath,
+        size: fileStats.size,
+        hash,
+      })
+      copiedFileNames.push(relativePath)
+      totalSize += fileStats.size
+    }
+
+    if (shouldCompress) {
+      await compress(stashDir, copiedFileNames)
+    }
+
+    return { fileMetadata, totalSize, isCompressed: shouldCompress }
   }
 
   /**

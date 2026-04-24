@@ -19,6 +19,7 @@ import { join, dirname } from "node:path"
 import { fileURLToPath } from "node:url"
 import { initCommand } from "./commands/init.js"
 import { saveCommand } from "./commands/save.js"
+import { updateCommand } from "./commands/update.js"
 import { listCommand } from "./commands/list.js"
 import { popCommand } from "./commands/pop.js"
 import { applyCommand } from "./commands/apply.js"
@@ -96,7 +97,10 @@ async function createProgram(): Promise<Command> {
     .option("-p, --path <path>", "Local path to clone to (default: ~/.pstash)")
     .action(
       withErrorHandling(opts =>
-        initCommand({ remote: opts.remote as string | undefined, path: opts.path as string | undefined }),
+        initCommand({
+          remote: opts.remote as string | undefined,
+          path: opts.path as string | undefined,
+        }),
       ),
     )
 
@@ -108,13 +112,21 @@ async function createProgram(): Promise<Command> {
       "Stash files with a message.\n" +
         "  If <message> and [files...] are both omitted, runs in interactive mode.",
     )
-    .option("-t, --tag <tag>", "Add tag (repeatable)", (val: string, prev: string[]) => [...prev, val], [] as string[])
+    .option(
+      "-t, --tag <tag>",
+      "Add tag (repeatable)",
+      (val: string, prev: string[]) => [...prev, val],
+      [] as string[],
+    )
     .option("-p, --project <name>", "Override auto-detected project name")
     .option("--no-sync", "Skip auto pull+push for this operation")
     .option("--rm", "Remove source files after saving")
     .option("--keep", "Keep source files (overrides config removeAfterSave=true)")
     .option("--compress", "Compress stash as tar.gz (overrides config defaults.compression)")
-    .option("--unstaged", "Auto-detect unstaged git files and stash them (ignores [files...] patterns)")
+    .option(
+      "--unstaged",
+      "Auto-detect unstaged git files and stash them (ignores [files...] patterns)",
+    )
     .action(
       withErrorHandling((message: string | undefined, files: string[], opts) =>
         saveCommand(message, files, {
@@ -125,6 +137,44 @@ async function createProgram(): Promise<Command> {
           keep: opts.keep as boolean,
           compress: opts.compress as boolean | undefined,
           unstaged: opts.unstaged as boolean,
+        }),
+      ),
+    )
+
+  // ─── pstash update ────────────────────────────────────────────────────────
+
+  program
+    .command("update [index] [files...]")
+    .description(
+      "Overwrite files of an existing stash (keeps the stash ID).\n" +
+        "  If [index] is omitted, prompts for stash selection.\n" +
+        "  If [files...] is omitted, prompts interactively.",
+    )
+    .option("-m, --message <msg>", "Override the stash message (defaults to the existing one)")
+    .option(
+      "-t, --tag <tag>",
+      "Replace tags (repeatable). If any tag is given, existing tags are replaced.",
+      (val: string, prev: string[]) => [...prev, val],
+      [] as string[],
+    )
+    .option("-p, --project <name>", "Override auto-detected project name")
+    .option("--no-sync", "Skip auto pull+push for this operation")
+    .option("--compress", "Compress stash as tar.gz (overrides config defaults.compression)")
+    .option(
+      "--unstaged",
+      "Auto-detect unstaged git files and stash them (ignores [files...] patterns)",
+    )
+    .option("--force", "Skip confirmation prompt")
+    .action(
+      withErrorHandling((index: string | undefined, files: string[], opts) =>
+        updateCommand(index !== undefined ? parseInt(index, 10) : undefined, files, {
+          message: opts.message as string | undefined,
+          tag: opts.tag as string[],
+          project: opts.project as string | undefined,
+          noSync: !opts.sync as boolean,
+          compress: opts.compress as boolean | undefined,
+          unstaged: opts.unstaged as boolean,
+          force: opts.force as boolean,
         }),
       ),
     )
@@ -225,7 +275,7 @@ async function createProgram(): Promise<Command> {
         showCommand(index !== undefined ? parseInt(index, 10) : undefined, {
           project: opts.project as string | undefined,
           files: opts.files as boolean,
-          cat: opts.cat === undefined ? undefined : (opts.cat === true ? "" : (opts.cat as string)),
+          cat: opts.cat === undefined ? undefined : opts.cat === true ? "" : (opts.cat as string),
           json: opts.json as boolean,
         }),
       ),

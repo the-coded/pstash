@@ -59,13 +59,34 @@ export class Indexer {
   }
 
   /**
+   * Updates .project.json after a stash is updated in place.
+   * Keeps `stashCount` unchanged and recalculates `totalSize` from all
+   * current stashes (since the updated stash may have a different size).
+   */
+  async onUpdate(project: string, allStashes: StashMetadata[]): Promise<void> {
+    const existing = await this.load(project)
+    const now = new Date().toISOString()
+
+    const totalBytes = allStashes.reduce((acc, s) => acc + s.totalSize, 0)
+
+    const updated: ProjectMetadata = {
+      name: project,
+      remote: existing?.remote,
+      aliases: existing?.aliases ?? [],
+      stashCount: allStashes.length,
+      totalSize: formatSize(totalBytes),
+      createdAt: existing?.createdAt ?? now,
+      updatedAt: now,
+    }
+
+    await writeJson(this.getProjectJsonPath(project), updated)
+  }
+
+  /**
    * Updates .project.json after a stash is deleted.
    * Recalculates count from actual stash directories.
    */
-  async onDelete(
-    project: string,
-    remainingStashes: StashMetadata[],
-  ): Promise<void> {
+  async onDelete(project: string, remainingStashes: StashMetadata[]): Promise<void> {
     const existing = await this.load(project)
     const now = new Date().toISOString()
 
@@ -97,9 +118,13 @@ function parseBytes(sizeStr: string): number {
   const unit = (match[2] ?? "B").toUpperCase()
 
   switch (unit) {
-    case "KB": return Math.round(value * 1000)
-    case "MB": return Math.round(value * 1000 * 1000)
-    case "GB": return Math.round(value * 1000 * 1000 * 1000)
-    default: return Math.round(value)
+    case "KB":
+      return Math.round(value * 1000)
+    case "MB":
+      return Math.round(value * 1000 * 1000)
+    case "GB":
+      return Math.round(value * 1000 * 1000 * 1000)
+    default:
+      return Math.round(value)
   }
 }

@@ -70,6 +70,11 @@ export const StashMetadataSchema = z.object({
   project: z.string(),
   /** ISO 8601 creation timestamp */
   timestamp: z.string().datetime(),
+  /**
+   * ISO 8601 timestamp of the last `pstash update` on this stash.
+   * Absent when the stash has never been updated.
+   */
+  updatedAt: z.string().datetime().optional(),
   /** Human-readable description of what was stashed */
   message: z.string(),
   /**
