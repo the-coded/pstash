@@ -1,7 +1,22 @@
 /**
- * src/commands/init.ts
+ * @module commands/init
  *
- * pstash init — Initialize personal stash by cloning data repo and creating config.
+ * `pstash init` — Initialize personal stash by cloning the data repo and creating
+ * `~/.pstashrc`.
+ *
+ * If the local path already exists, only line-ending config is applied (no clone).
+ * If the remote clone fails (typically because the remote is empty), falls back to
+ * `git init` + `git remote add` + initial commit.
+ *
+ * @example
+ * // Interactive — prompts for remote URL
+ * pstash init
+ *
+ * // Non-interactive
+ * pstash init --remote git@github.com:user/my-personal-stash.git
+ *
+ * // Custom local path
+ * pstash init --remote ... --path ~/Documents/stash
  */
 
 import chalk from "chalk"
@@ -13,10 +28,20 @@ import { GitManager } from "../core/git.js"
 import { exists } from "../utils/fs.js"
 
 export interface InitCommandOptions {
+  /** Stash data repo URL (SSH or HTTPS). If omitted, prompts interactively. */
   remote?: string
+  /** Local clone path. Defaults to `~/.pstash`. */
   path?: string
 }
 
+/**
+ * Executes the `pstash init` command.
+ * Idempotent: returns early without changes if `~/.pstashrc` already exists.
+ *
+ * @param options - Init options (remote URL and local path)
+ *
+ * @throws {Error} If both `git clone` and `git init` fall back fails
+ */
 export async function initCommand(options: InitCommandOptions): Promise<void> {
   console.log(chalk.bold("\n🔧 Initializing pstash...\n"))
 

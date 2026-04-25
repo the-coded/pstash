@@ -1,8 +1,19 @@
 /**
- * src/core/detector.ts
+ * @module core/detector
  *
- * Project detection — identifies the current project by git remote or directory name.
- * Uses simple-git for cross-platform compatibility.
+ * Project detection — identifies the current project by git remote
+ * or directory name, and resolves aliases declared in the global config.
+ *
+ * Detection order:
+ * 1. Parse the `origin` git remote URL → repo name.
+ * 2. Fallback to the basename of `process.cwd()`.
+ *
+ * @example
+ * ```ts
+ * const detector = new ProjectDetector()
+ * const project = await detector.detectAndResolve(config)
+ * // → "scena" (resolved through aliases if needed)
+ * ```
  */
 
 import { basename } from "node:path"

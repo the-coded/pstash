@@ -1,8 +1,11 @@
 /**
- * src/core/indexer.ts
+ * @module core/indexer
  *
- * Manages .project.json metadata files within the stash data repo.
- * Tracks stash counts, total size, and timestamps per project.
+ * Manages `.project.json` metadata files inside the stash data repo.
+ *
+ * Each project directory holds a `.project.json` summarizing its
+ * stash count, aggregate size, and timestamps. The indexer is updated
+ * on save / update / delete to keep this metadata in sync.
  */
 
 import { join } from "node:path"

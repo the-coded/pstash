@@ -1,8 +1,19 @@
 /**
- * src/config/loader.ts
+ * @module config/loader
  *
- * Load and save ~/.pstashrc global config.
- * Uses os.homedir() for cross-platform path resolution.
+ * Load, save, and validate the global pstash config (`~/.pstashrc`).
+ *
+ * The config file is a JSON document validated against
+ * {@link GlobalConfigSchema}. All paths support `~/` notation, which
+ * is expanded against `os.homedir()` for cross-platform compatibility.
+ *
+ * @example
+ * ```ts
+ * import { loadConfig, updateConfig } from "pstash/config/loader"
+ *
+ * const config = await loadConfig()
+ * await updateConfig({ autoSync: false })
+ * ```
  */
 
 import { readFile, writeFile, access } from "node:fs/promises"

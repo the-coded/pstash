@@ -1,7 +1,9 @@
 /**
- * src/utils/format.ts
+ * @module utils/format
  *
- * Terminal output formatters for stash display.
+ * Terminal output formatters for stash display:
+ * single-line summaries, choice labels for prompts, full detail
+ * blocks for `pstash show`, and human-readable byte sizes.
  */
 
 import prettyBytes from "pretty-bytes"

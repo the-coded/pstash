@@ -1,7 +1,10 @@
 /**
- * src/utils/time.ts
+ * @module utils/time
  *
- * Date/time parsing utilities for timespec strings like "7d", "2w", "1m".
+ * Date/time helpers used by stash filtering and display:
+ * parsing relative timespecs (`"7d"`, `"2w"`, `"1m"`) and
+ * absolute ISO dates, comparing timestamps, and formatting
+ * timestamps for the terminal.
  */
 
 /**

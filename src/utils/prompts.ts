@@ -1,7 +1,10 @@
 /**
- * src/utils/prompts.ts
+ * @module utils/prompts
  *
- * Interactive CLI prompts using @inquirer/prompts.
+ * Interactive CLI prompts powered by `@inquirer/prompts`:
+ * stash pickers (single / multi), confirmation, free-form input,
+ * diff target selection, and the file-pattern picker used by
+ * `pstash save` when invoked without explicit globs.
  */
 
 import { select, confirm, input, checkbox } from "@inquirer/prompts"

@@ -1,7 +1,12 @@
 /**
- * src/config/templates.ts
+ * @module config/templates
  *
- * Default config templates for new installations.
+ * Default config templates and seed files for fresh pstash installs.
+ *
+ * Provides:
+ * - {@link createDefaultConfig} — builds a {@link GlobalConfig} from defaults
+ * - {@link DATA_REPO_README} — initial README for the data repo
+ * - {@link DATA_REPO_GITIGNORE} — initial `.gitignore` for the data repo
  */
 
 import type { GlobalConfig } from "../schemas.js"

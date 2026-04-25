@@ -1,7 +1,11 @@
 /**
- * src/utils/validation.ts
+ * @module utils/validation
  *
  * Zod validation helpers for safe I/O parsing.
+ *
+ * Wraps common patterns (parse JSON + validate, validate plain
+ * objects, type-guard) and produces descriptive error messages
+ * with the offending JSON paths.
  */
 
 import { type z } from "zod"

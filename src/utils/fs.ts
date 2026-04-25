@@ -1,7 +1,9 @@
 /**
- * src/utils/fs.ts
+ * @module utils/fs
  *
- * Cross-platform file system helpers.
+ * Thin cross-platform helpers around `node:fs/promises`:
+ * directory creation, existence checks, JSON read/write with
+ * Zod validation, and safe file/dir removal.
  */
 
 import { mkdir, readFile, writeFile, rm, access, stat } from "node:fs/promises"

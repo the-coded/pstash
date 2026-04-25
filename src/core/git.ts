@@ -1,8 +1,17 @@
 /**
- * src/core/git.ts
+ * @module core/git
  *
- * Git operations wrapper using simple-git.
- * All operations are cross-platform (no execSync).
+ * Cross-platform git operations wrapper around `simple-git`.
+ *
+ * All operations target a single repo path (the local stash data repo)
+ * and avoid `execSync` so they work the same on macOS, Linux and Windows.
+ *
+ * @example
+ * ```ts
+ * const git = new GitManager(repoPath)
+ * await git.commitAll("save: notes")
+ * await git.push()
+ * ```
  */
 
 import { join } from "node:path"
