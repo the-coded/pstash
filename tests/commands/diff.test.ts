@@ -35,12 +35,18 @@ const fsMocks = vi.hoisted(() => ({
   exists: vi.fn().mockResolvedValue(false),
 }))
 
+const readFileMock = vi.hoisted(() => vi.fn())
+
 // ─── Module mocks ─────────────────────────────────────────────────────────────
 
 vi.mock("ora", () => ({
   default: vi.fn().mockReturnValue({
     start: vi.fn().mockReturnValue({ succeed: vi.fn(), fail: vi.fn(), warn: vi.fn() }),
   }),
+}))
+
+vi.mock("node:fs/promises", () => ({
+  readFile: readFileMock,
 }))
 
 vi.mock("../../src/config/loader.js", () => loaderMocks)
@@ -82,11 +88,11 @@ const makeConfig = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 })
 
-const makeStash = (id: string) => ({
+const makeStash = (id: string, files: string[] = ["file.txt"]) => ({
   id,
   message: `stash ${id}`,
   timestamp: "2026-03-01T00:00:00.000Z",
-  files: [{ name: "file.txt", size: 100 }],
+  files: files.map(name => ({ name, size: 100 })),
   tags: [],
   totalSize: 100,
   branch: "main",
@@ -100,6 +106,8 @@ beforeEach(() => {
   vi.spyOn(console, "log").mockImplementation(() => undefined)
   loaderMocks.loadConfig.mockResolvedValue(makeConfig())
   loaderMocks.resolveLocalPath.mockReturnValue("/fake/repo")
+  fsMocks.exists.mockResolvedValue(false)
+  readFileMock.mockResolvedValue("")
   stasherMocks.listMetadata.mockResolvedValue([
     makeStash("stash-001"),
     makeStash("stash-002"),
@@ -174,5 +182,81 @@ describe("diffCommand — no stashes", () => {
 
     expect(promptsMocks.selectStash).not.toHaveBeenCalled()
     expect(promptsMocks.selectDiffTarget).not.toHaveBeenCalled()
+  })
+})
+
+// ─── autoSync ────────────────────────────────────────────────────────────────
+
+describe("diffCommand — autoSync", () => {
+  it("pulls before diffing when autoSync=true", async () => {
+    loaderMocks.loadConfig.mockResolvedValue(makeConfig({ autoSync: true }))
+
+    await diffCommand(0, undefined, {})
+
+    expect(gitMocks.pull).toHaveBeenCalledOnce()
+  })
+})
+
+// ─── Stash-vs-stash diff ─────────────────────────────────────────────────────
+
+describe("diffCommand — diff rendering", () => {
+  it("renders an inline diff when comparing two stashes with different content", async () => {
+    fsMocks.exists.mockResolvedValue(true)
+    // Stash A reads "hello\nworld", Stash B reads "hello\nbarney"
+    readFileMock.mockResolvedValueOnce("hello\nworld").mockResolvedValueOnce("hello\nbarney")
+
+    await diffCommand(0, 1, {})
+
+    const printed = vi
+      .mocked(console.log)
+      .mock.calls.map(c => String(c[0]))
+      .join("\n")
+    // The renderer outputs +/- prefixed lines for changed content
+    expect(printed).toContain("- world")
+    expect(printed).toContain("+ barney")
+  })
+
+  it("flags a file as added when only present in stash B", async () => {
+    stasherMocks.listMetadata.mockResolvedValue([
+      makeStash("stash-001", ["a.txt"]),
+      makeStash("stash-002", ["a.txt", "b.txt"]),
+    ])
+    fsMocks.exists.mockResolvedValue(true)
+    readFileMock.mockResolvedValue("same") // a.txt identical in both
+
+    await diffCommand(0, 1, {})
+
+    const printed = vi
+      .mocked(console.log)
+      .mock.calls.map(c => String(c[0]))
+      .join("\n")
+    expect(printed).toMatch(/b\.txt.*added/)
+  })
+
+  it("flags a file as removed when only present in stash A", async () => {
+    stasherMocks.listMetadata.mockResolvedValue([
+      makeStash("stash-001", ["a.txt", "b.txt"]),
+      makeStash("stash-002", ["a.txt"]),
+    ])
+    fsMocks.exists.mockResolvedValue(true)
+    readFileMock.mockResolvedValue("same")
+
+    await diffCommand(0, 1, {})
+
+    const printed = vi
+      .mocked(console.log)
+      .mock.calls.map(c => String(c[0]))
+      .join("\n")
+    expect(printed).toMatch(/b\.txt.*removed/)
+  })
+
+  it("returns 'no files match' when --files filter excludes everything", async () => {
+    await diffCommand(0, 1, { files: "*.nope" })
+
+    const printed = vi
+      .mocked(console.log)
+      .mock.calls.map(c => String(c[0]))
+      .join("\n")
+    expect(printed).toMatch(/No files match/)
   })
 })

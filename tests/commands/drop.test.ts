@@ -236,3 +236,58 @@ describe("dropCommand — no stashes", () => {
     expect(stasherMocks.delete).not.toHaveBeenCalled()
   })
 })
+
+// ─── autoSync ────────────────────────────────────────────────────────────────
+
+describe("dropCommand — autoSync", () => {
+  it("pulls before and pushes after when autoSync=true", async () => {
+    loaderMocks.loadConfig.mockResolvedValue(makeConfig({ autoSync: true }))
+
+    await dropCommand(0, { force: true })
+
+    expect(gitMocks.pull).toHaveBeenCalledOnce()
+    expect(gitMocks.push).toHaveBeenCalledOnce()
+  })
+
+  it("commits but does not push when autoSync=false", async () => {
+    loaderMocks.loadConfig.mockResolvedValue(makeConfig({ autoSync: false }))
+
+    await dropCommand(0, { force: true })
+
+    expect(gitMocks.commitAll).toHaveBeenCalledOnce()
+    expect(gitMocks.push).not.toHaveBeenCalled()
+  })
+})
+
+// ─── --all double confirmation ───────────────────────────────────────────────
+
+describe("dropCommand — --all confirmation", () => {
+  it("requires two confirmations before wiping all stashes", async () => {
+    loaderMocks.loadConfig.mockResolvedValue(makeConfig())
+
+    await dropCommand(undefined, { all: true })
+
+    expect(promptsMocks.confirmAction).toHaveBeenCalledTimes(2)
+    expect(stasherMocks.delete).toHaveBeenCalledTimes(3)
+  })
+
+  it("aborts after the first 'no' on --all", async () => {
+    loaderMocks.loadConfig.mockResolvedValue(makeConfig())
+    promptsMocks.confirmAction.mockResolvedValueOnce(false)
+
+    await dropCommand(undefined, { all: true })
+
+    expect(promptsMocks.confirmAction).toHaveBeenCalledTimes(1)
+    expect(stasherMocks.delete).not.toHaveBeenCalled()
+  })
+
+  it("aborts after the second 'no' on --all", async () => {
+    loaderMocks.loadConfig.mockResolvedValue(makeConfig())
+    promptsMocks.confirmAction.mockResolvedValueOnce(true).mockResolvedValueOnce(false)
+
+    await dropCommand(undefined, { all: true })
+
+    expect(promptsMocks.confirmAction).toHaveBeenCalledTimes(2)
+    expect(stasherMocks.delete).not.toHaveBeenCalled()
+  })
+})

@@ -55,12 +55,15 @@ vi.mock("../../src/core/detector.js", () => ({
   },
 }))
 
+const readFileMock = vi.hoisted(() => vi.fn().mockResolvedValue(""))
+const existsMock = vi.hoisted(() => vi.fn().mockResolvedValue(false))
+
 vi.mock("node:fs/promises", () => ({
-  readFile: vi.fn().mockResolvedValue(""),
+  readFile: readFileMock,
 }))
 
 vi.mock("../../src/utils/fs.js", () => ({
-  exists: vi.fn().mockResolvedValue(false),
+  exists: existsMock,
 }))
 
 vi.mock("../../src/utils/format.js", () => ({
@@ -221,5 +224,49 @@ describe("listCommand — --json", () => {
     expect(Array.isArray(parsed)).toBe(true)
     expect(parsed).toHaveLength(2)
     expect(parsed[0].id).toBe("stash-001")
+  })
+})
+
+// ─── --preview ────────────────────────────────────────────────────────────────
+
+describe("listCommand — --preview", () => {
+  it("reads each stash file to print a preview snippet", async () => {
+    loaderMocks.loadConfig.mockResolvedValue(makeConfig({ autoSync: false }))
+    stasherMocks.listMetadata.mockResolvedValue([makeStash("stash-001")])
+    existsMock.mockResolvedValue(true)
+    readFileMock.mockResolvedValue("first line\nsecond line\nthird line")
+
+    await listCommand({ preview: true })
+
+    expect(readFileMock).toHaveBeenCalledOnce()
+    const printed = vi
+      .mocked(console.log)
+      .mock.calls.map(c => String(c[0]))
+      .join("\n")
+    expect(printed).toContain("first line")
+  })
+
+  it("does not crash when a previewed file is missing on disk", async () => {
+    loaderMocks.loadConfig.mockResolvedValue(makeConfig({ autoSync: false }))
+    stasherMocks.listMetadata.mockResolvedValue([makeStash("stash-001")])
+    existsMock.mockResolvedValue(false)
+
+    await expect(listCommand({ preview: true })).resolves.not.toThrow()
+    expect(readFileMock).not.toHaveBeenCalled()
+  })
+
+  it("truncates preview lines longer than 80 chars", async () => {
+    loaderMocks.loadConfig.mockResolvedValue(makeConfig({ autoSync: false }))
+    stasherMocks.listMetadata.mockResolvedValue([makeStash("stash-001")])
+    existsMock.mockResolvedValue(true)
+    readFileMock.mockResolvedValue("x".repeat(200))
+
+    await listCommand({ preview: true })
+
+    const printed = vi
+      .mocked(console.log)
+      .mock.calls.map(c => String(c[0]))
+      .join("\n")
+    expect(printed).toContain("...")
   })
 })
