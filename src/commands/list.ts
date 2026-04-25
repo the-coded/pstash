@@ -41,7 +41,7 @@ export interface ListCommandOptions {
   since?: string
   /** Show stashes before this timespec */
   until?: string
-  /** Show first 3 lines of each file */
+  /** Show first non-empty line of each file (up to the first 3 files per stash) */
   preview?: boolean
   /** Output as JSON for scripting */
   json?: boolean
@@ -138,7 +138,7 @@ export async function listCommand(options: ListCommandOptions): Promise<void> {
     for (const [index, stash] of stashes.entries()) {
       console.log(`  ${formatStashLine(stash, index)}`)
 
-      // Preview: show first 3 lines of each file
+      // Preview: show first non-empty line of up to the first 3 files
       if (options.preview) {
         for (const file of stash.files.slice(0, 3)) {
           const filePath = join(repoPath, project, stash.id, file.name)

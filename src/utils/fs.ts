@@ -31,7 +31,8 @@ export async function exists(filePath: string): Promise<boolean> {
 }
 
 /**
- * Gets file size in bytes. Returns 0 if file doesn't exist.
+ * Gets file size in bytes.
+ * Returns `0` if the file does not exist or is otherwise inaccessible.
  */
 export async function getFileSize(filePath: string): Promise<number> {
   try {

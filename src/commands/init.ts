@@ -40,7 +40,7 @@ export interface InitCommandOptions {
  *
  * @param options - Init options (remote URL and local path)
  *
- * @throws {Error} If both `git clone` and `git init` fall back fails
+ * @throws {Error} If both `git clone` and the `git init` fallback fail
  */
 export async function initCommand(options: InitCommandOptions): Promise<void> {
   console.log(chalk.bold("\n🔧 Initializing pstash...\n"))

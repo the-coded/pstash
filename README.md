@@ -80,7 +80,7 @@ pstash-cli/             ← this package (CLI code)
       cli.ts            ← Commander.js setup + command registration
       commands/         ← one file per command
       core/
-        stasher.ts      ← save() / restore() / delete() / list()
+        stasher.ts      ← save() / update() / restore() / delete() / list()
         indexer.ts      ← manages .project.json
         detector.ts     ← project name detection (git remote / dirname)
         git.ts          ← simple-git wrapper

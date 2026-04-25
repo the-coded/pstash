@@ -13,7 +13,7 @@ import { formatTimestamp } from "./time.js"
 /**
  * Formats a stash entry as a single display line.
  *
- * Output: "[0] 2026-03-12 01:05 - planning docs (6 files, 245KB) [docs, planning]"
+ * Output: `"[0] 2026-03-12 01:05 - planning docs (6 files, 245 kB) [docs, planning]"`
  */
 export function formatStashLine(stash: StashMetadata, index: number): string {
   const date = formatTimestamp(stash.timestamp)
@@ -24,8 +24,8 @@ export function formatStashLine(stash: StashMetadata, index: number): string {
 }
 
 /**
- * Formats bytes to a human-readable string using pretty-bytes.
- * e.g. 245000 → "245 KB"
+ * Formats bytes to a human-readable string using `pretty-bytes`.
+ * e.g. `245000` → `"245 kB"` (SI units, lowercase, with space).
  */
 export function formatSize(bytes: number): string {
   return prettyBytes(bytes)
@@ -33,7 +33,10 @@ export function formatSize(bytes: number): string {
 
 /**
  * Formats a stash for interactive prompt selection.
- * Compact format for @inquirer/prompts list.
+ * Compact format for `@inquirer/prompts` lists. Always uses the literal
+ * `"files"` (no singular form) for consistent column alignment in pickers.
+ *
+ * Output: `"[0] 2026-03-12 01:05 - planning docs (6 files, 245 kB) [docs]"`
  */
 export function formatStashChoice(stash: StashMetadata, index: number): string {
   const date = formatTimestamp(stash.timestamp)

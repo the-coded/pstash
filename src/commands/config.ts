@@ -181,6 +181,7 @@ function printConfigTable(config: GlobalConfig): void {
  *
  * @throws {Error} If config is not initialized
  * @throws {Error} If `key` is invalid or `value` has wrong type
+ * @throws {Error} If `key` is provided in GET mode and does not exist
  */
 export async function configCommand(
   key: string | undefined,

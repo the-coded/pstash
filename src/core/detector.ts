@@ -6,7 +6,8 @@
  *
  * Detection order:
  * 1. Parse the `origin` git remote URL → repo name.
- * 2. Fallback to the basename of `process.cwd()`.
+ * 2. Fallback to any other configured git remote → repo name.
+ * 3. Fallback to the basename of `process.cwd()`.
  *
  * @example
  * ```ts
@@ -20,13 +21,20 @@ import { basename } from "node:path"
 import { simpleGit } from "simple-git"
 import type { GlobalConfig } from "../schemas.js"
 
+/**
+ * Detects and resolves the current project name based on git remotes,
+ * directory name, and config-declared aliases.
+ */
 export class ProjectDetector {
   /**
    * Detects the current project name based on git remote or directory name.
    *
    * Detection order:
-   * 1. Git origin remote → extract repo name
-   * 2. Fallback → basename of cwd
+   * 1. Git `origin` remote → extract repo name
+   * 2. Any other git remote → extract repo name
+   * 3. Fallback → basename of `process.cwd()`
+   *
+   * @returns Detected project name (raw, before alias resolution)
    */
   async detect(): Promise<string> {
     try {
@@ -60,7 +68,9 @@ export class ProjectDetector {
   }
 
   /**
-   * Gets the current git branch name. Returns undefined if not in a git repo.
+   * Gets the current git branch name.
+   *
+   * @returns Current branch name, or `undefined` if not in a git repo or on error
    */
   async getCurrentBranch(): Promise<string | undefined> {
     try {
@@ -76,7 +86,9 @@ export class ProjectDetector {
   }
 
   /**
-   * Gets the current git commit hash. Returns undefined if not in a git repo.
+   * Gets the current git commit hash (full SHA).
+   *
+   * @returns Current commit hash, or `undefined` if not in a git repo or on error
    */
   async getCurrentCommit(): Promise<string | undefined> {
     try {
@@ -93,7 +105,11 @@ export class ProjectDetector {
 
   /**
    * Resolves a project name by checking aliases in the global config.
-   * e.g. "e2e-gen" → "scena" (if configured as alias)
+   * e.g. `"e2e-gen"` → `"scena"` if `scena.aliases` includes `"e2e-gen"`.
+   *
+   * @param name - Raw project name to resolve
+   * @param config - Global config containing project aliases
+   * @returns Canonical project name, or `name` unchanged if no alias matches
    */
   resolveAlias(name: string, config: GlobalConfig): string {
     for (const [projectName, meta] of Object.entries(config.projects)) {
@@ -103,7 +119,10 @@ export class ProjectDetector {
   }
 
   /**
-   * Resolves detected project name against config aliases.
+   * Detects the current project and resolves it against config aliases.
+   *
+   * @param config - Global config containing project aliases
+   * @returns Canonical project name (alias-resolved)
    */
   async detectAndResolve(config: GlobalConfig): Promise<string> {
     const detected = await this.detect()

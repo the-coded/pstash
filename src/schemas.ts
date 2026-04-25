@@ -274,7 +274,7 @@ export const ListOptionsSchema = z.object({
   since: z.string().optional(),
   /** Show stashes created before this timespec */
   until: z.string().optional(),
-  /** Show preview of first 3 lines of each file */
+  /** Show preview of the first non-empty line of up to the first 3 files per stash */
   preview: z.boolean().default(false),
   /** Output as JSON for scripting */
   json: z.boolean().default(false),
