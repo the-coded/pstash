@@ -14,9 +14,7 @@
 
 import { Command } from "commander"
 import chalk from "chalk"
-import { readFile } from "node:fs/promises"
-import { join, dirname } from "node:path"
-import { fileURLToPath } from "node:url"
+import { getCliVersion } from "./utils/version.js"
 import { initCommand } from "./commands/init.js"
 import { saveCommand } from "./commands/save.js"
 import { updateCommand } from "./commands/update.js"
@@ -30,23 +28,6 @@ import { statusCommand } from "./commands/status.js"
 import { cleanCommand } from "./commands/clean.js"
 import { diffCommand } from "./commands/diff.js"
 import { configCommand } from "./commands/config.js"
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-
-/**
- * Reads the version from package.json.
- * Falls back to "0.0.0" if package.json cannot be read.
- */
-async function getVersion(): Promise<string> {
-  try {
-    const pkgPath = join(__dirname, "..", "package.json")
-    const pkg = JSON.parse(await readFile(pkgPath, "utf-8")) as { version: string }
-    return pkg.version
-  } catch {
-    return "0.0.0"
-  }
-}
 
 /**
  * Global error handler for CLI commands.
@@ -79,7 +60,7 @@ function withErrorHandling<T extends unknown[]>(
  * Called once at startup by `run()`.
  */
 async function createProgram(): Promise<Command> {
-  const version = await getVersion()
+  const version = await getCliVersion()
   const program = new Command()
 
   program

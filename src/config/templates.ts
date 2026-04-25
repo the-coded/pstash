@@ -29,7 +29,7 @@ export function createDefaultConfig(remote: string, localPath = "~/.pstash"): Gl
  */
 export const DATA_REPO_README = `# My Personal Stash
 
-> Managed by [pstash](https://github.com/gabemule/personal-stash-cli) — Git-backed personal file stash.
+> Managed by [pstash](https://github.com/the-coded/pstash-cli) — Git-backed personal file stash.
 
 ## Structure
 

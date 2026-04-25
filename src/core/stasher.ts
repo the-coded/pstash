@@ -20,12 +20,34 @@ import { tmpdir } from "node:os"
 import { createHash } from "node:crypto"
 import { userInfo, hostname } from "node:os"
 import { nanoid } from "nanoid"
-import { format } from "date-fns"
 import { globby } from "globby"
 import { StashMetadataSchema } from "../schemas.js"
 import type { StashMetadata } from "../schemas.js"
 import { writeJson, exists } from "../utils/fs.js"
 import { compress, decompress } from "./compressor.js"
+
+/**
+ * Generates a unique stash ID with the format `YYYY-MM-DD_HH-mm_XXXX` in UTC.
+ *
+ * The timestamp prefix is derived from `Date#toISOString()` (always UTC), and a
+ * 4-character `nanoid` suffix prevents collisions between machines that save
+ * in the same minute.
+ *
+ * @param timestamp - The reference time (defaults to now). UTC is always used.
+ * @returns A stash ID like `"2026-03-12_01-05_k7x2"`.
+ *
+ * @example
+ * generateStashId(new Date("2026-03-12T01:05:00Z"))
+ * // → "2026-03-12_01-05_k7x2"
+ */
+export function generateStashId(timestamp: Date = new Date()): string {
+  // toISOString() is always UTC: "2026-03-12T01:05:23.000Z"
+  // We slice "2026-03-12T01:05" → 16 chars, then format with `_` separators.
+  const iso = timestamp.toISOString().slice(0, 16) // "YYYY-MM-DDTHH:mm"
+  const datePart = iso.slice(0, 10) // "YYYY-MM-DD"
+  const timePart = iso.slice(11, 16).replace(":", "-") // "HH-mm"
+  return `${datePart}_${timePart}_${nanoid(4)}`
+}
 
 export class Stasher {
   private stashRepoPath: string
@@ -78,8 +100,7 @@ export class Stasher {
     compress?: boolean
   }): Promise<StashMetadata> {
     const timestamp = new Date()
-    // Timestamp + 4-char suffix prevents collision between machines saving in the same minute
-    const id = `${format(timestamp, "yyyy-MM-dd_HH-mm")}_${nanoid(4)}`
+    const id = generateStashId(timestamp)
 
     const stashDir = join(this.stashRepoPath, options.project, id)
     await mkdir(stashDir, { recursive: true })

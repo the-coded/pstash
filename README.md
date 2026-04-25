@@ -67,7 +67,7 @@ pstash pop
 ## Architecture
 
 ```
-personal-stash-cli/     ← this package (CLI code)
+pstash-cli/             ← this package (CLI code)
     src/
       cli.ts            ← Commander.js setup + command registration
       commands/         ← one file per command
