@@ -1,6 +1,14 @@
-# pstash
+<h1 align="center">pstash</h1>
 
-**Git-backed personal file stash — persistent, project-categorized, multi-machine.**
+<p align="center">
+  <a href="https://www.npmjs.com/package/pstash"><img src="https://img.shields.io/npm/v/pstash.svg" alt="npm version" /></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/npm/l/pstash.svg" alt="license" /></a>
+  <a href="https://nodejs.org"><img src="https://img.shields.io/node/v/pstash.svg" alt="node" /></a>
+</p>
+
+<p align="center">
+  <strong>Git-backed personal file stash — persistent, project-categorized, multi-machine.</strong>
+</p>
 
 <p align="center">
   <img src="./assets/pstash.png" alt="pstash — Git-backed Personal File Stash" width="800" />
