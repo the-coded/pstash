@@ -268,17 +268,17 @@ Overwrite the files of an existing stash. Keeps the stash's `id` and original `t
 pstash update [options] [index] [files...]
 ```
 
-| Option                 | Description                                                                  |
-| ---------------------- | ---------------------------------------------------------------------------- |
-| `-m, --message <msg>`  | Override the stash message (defaults to the existing one)                    |
-| `-t, --tag <tag>`      | Replace tags (repeatable). If any tag is given, existing tags are replaced.  |
-| `-p, --project <name>` | Override auto-detected project name                                          |
-| `--no-sync`            | Skip auto pull+push for this operation                                       |
-| `--compress`           | Compress stash as tar.gz (overrides `defaults.compression`)                  |
-| `--unstaged`           | Auto-detect unstaged git files and stash them — ignores `[files...]`         |
-| `--force`              | Skip confirmation prompt                                                     |
-| `[index]`              | 0-based index. If omitted: interactive stash selector                        |
-| `[files...]`           | Glob patterns for the new contents. If omitted: interactive file picker      |
+| Option                 | Description                                                                 |
+| ---------------------- | --------------------------------------------------------------------------- |
+| `-m, --message <msg>`  | Override the stash message (defaults to the existing one)                   |
+| `-t, --tag <tag>`      | Replace tags (repeatable). If any tag is given, existing tags are replaced. |
+| `-p, --project <name>` | Override auto-detected project name                                         |
+| `--no-sync`            | Skip auto pull+push for this operation                                      |
+| `--compress`           | Compress stash as tar.gz (overrides `defaults.compression`)                 |
+| `--unstaged`           | Auto-detect unstaged git files and stash them — ignores `[files...]`        |
+| `--force`              | Skip confirmation prompt                                                    |
+| `[index]`              | 0-based index. If omitted: interactive stash selector                       |
+| `[files...]`           | Glob patterns for the new contents. If omitted: interactive file picker     |
 
 **Examples:**
 

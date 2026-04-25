@@ -147,9 +147,7 @@ describe("cleanCommand — --tag filter", () => {
   })
 
   it("reports nothing to clean when no stash matches the tag", async () => {
-    stasherMocks.listMetadata.mockResolvedValue([
-      makeStash("stash-001", { tags: ["release"] }),
-    ])
+    stasherMocks.listMetadata.mockResolvedValue([makeStash("stash-001", { tags: ["release"] })])
 
     await cleanCommand({ tag: "wip", force: true })
 
@@ -207,9 +205,7 @@ describe("cleanCommand — --older-than filter", () => {
 
 describe("cleanCommand — --dry-run", () => {
   it("does not delete anything in dry-run", async () => {
-    stasherMocks.listMetadata.mockResolvedValue([
-      makeStash("stash-001", { tags: ["wip"] }),
-    ])
+    stasherMocks.listMetadata.mockResolvedValue([makeStash("stash-001", { tags: ["wip"] })])
 
     await cleanCommand({ tag: "wip", dryRun: true, force: true })
 
