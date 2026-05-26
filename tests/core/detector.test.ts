@@ -89,7 +89,7 @@ describe("ProjectDetector", () => {
       mockGit.getRemotes.mockResolvedValue([
         {
           name: "origin",
-          refs: { fetch: "git@github.com:gabemule/my-repo.git", push: "" },
+          refs: { fetch: "git@github.com:the-coded/my-repo.git", push: "" },
         },
       ])
 
@@ -103,7 +103,7 @@ describe("ProjectDetector", () => {
       mockGit.getRemotes.mockResolvedValue([
         {
           name: "origin",
-          refs: { fetch: "https://github.com/gabemule/my-repo.git", push: "" },
+          refs: { fetch: "https://github.com/the-coded/my-repo.git", push: "" },
         },
       ])
 
@@ -266,7 +266,7 @@ describe("ProjectDetector", () => {
       mockGit.getRemotes.mockResolvedValue([
         {
           name: "origin",
-          refs: { fetch: "git@github.com:gabemule/e2e-gen.git", push: "" },
+          refs: { fetch: "git@github.com:the-coded/e2e-gen.git", push: "" },
         },
       ])
 
@@ -284,7 +284,7 @@ describe("ProjectDetector", () => {
       mockGit.getRemotes.mockResolvedValue([
         {
           name: "origin",
-          refs: { fetch: "git@github.com:gabemule/personal-blog.git", push: "" },
+          refs: { fetch: "git@github.com:the-coded/personal-blog.git", push: "" },
         },
       ])
 

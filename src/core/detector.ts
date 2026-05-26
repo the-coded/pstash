@@ -47,8 +47,8 @@ export class ProjectDetector {
 
       if (origin?.refs.fetch) {
         // Extract repo name from remote URL:
-        // git@github.com:gabemule/scena.git → scena
-        // https://github.com/gabemule/scena.git → scena
+        // git@github.com:the-coded/scena.git → scena
+        // https://github.com/the-coded/scena.git → scena
         const match = /\/([^/]+?)(\.git)?$/.exec(origin.refs.fetch)
         if (match?.[1]) return match[1]
       }
