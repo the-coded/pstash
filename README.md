@@ -1,9 +1,9 @@
 <h1 align="center">pstash</h1>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/pstash-cli"><img src="https://img.shields.io/npm/v/pstash-cli.svg" alt="npm version" /></a>
-  <a href="./LICENSE"><img src="https://img.shields.io/npm/l/pstash-cli.svg" alt="license" /></a>
-  <a href="https://nodejs.org"><img src="https://img.shields.io/node/v/pstash-cli.svg" alt="node" /></a>
+  <a href="https://www.npmjs.com/package/@the-coded/pstash"><img src="https://img.shields.io/npm/v/@the-coded/pstash.svg" alt="npm version" /></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/npm/l/@the-coded/pstash.svg" alt="license" /></a>
+  <a href="https://nodejs.org"><img src="https://img.shields.io/node/v/@the-coded/pstash.svg" alt="node" /></a>
 </p>
 
 <p align="center">
@@ -28,8 +28,6 @@ pstash pop
 
 - [Table of Contents](#table-of-contents)
 - [Overview](#overview)
-  - [How it works](#how-it-works)
-- [Architecture](#architecture)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
   - [1. Create a private data repo](#1-create-a-private-data-repo)
@@ -71,52 +69,12 @@ pstash pop
 - **Organized** — grouped by project, tagged, searchable
 - **Multi-machine** — synced via a private git repo
 
-### How it works
-
-1. You have a private **data repo** (e.g. `my-personal-stash` on GitHub)
-2. `pstash init` clones it to `~/.pstash` and creates `~/.pstashrc`
-3. `pstash save` copies your files into `~/.pstash/<project>/<stash-id>/`
-4. A `.stash.json` metadata file is written alongside the files
-5. Changes are committed and (optionally) pushed to remote
-6. `pstash pop` or `pstash apply` restores files back to your project
-
----
-
-## Architecture
-
-```
-pstash-cli/             ← this package (CLI code)
-    src/
-      cli.ts            ← Commander.js setup + command registration
-      commands/         ← one file per command
-      core/
-        stasher.ts      ← save() / update() / restore() / delete() / list()
-        indexer.ts      ← manages .project.json
-        detector.ts     ← project name detection (git remote / dirname)
-        git.ts          ← simple-git wrapper
-        compressor.ts   ← tar.gz compress/decompress
-      config/
-        loader.ts       ← ~/.pstashrc read/write/validate
-      schemas.ts        ← Zod SSoT for all types
-      utils/            ← fs, format, time, validation, prompts
-
-~/.pstashrc             ← global config (JSON)
-~/.pstash/              ← local clone of your data repo
-    <project>/
-      .project.json     ← project index (count, size, aliases)
-      <stash-id>/
-        .stash.json     ← stash metadata
-        <your-files>    ← stashed files (or stash.tar.gz)
-```
-
-**Two-repo design**: The CLI code (`pstash` npm package) is separate from the data repo (`my-personal-stash`). The data repo is yours — private, versioned by git, never published to npm.
-
 ---
 
 ## Installation
 
 ```bash
-npm install -g pstash-cli
+npm install -g @the-coded/pstash
 ```
 
 > **Requirements**: Node 20+, Git
