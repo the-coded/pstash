@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@the-coded/pstash"><img src="https://img.shields.io/npm/v/@the-coded/pstash.svg" alt="npm version" /></a>
-  <a href="./LICENSE"><img src="https://img.shields.io/npm/l/@the-coded/pstash.svg" alt="license" /></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="license" /></a>
   <a href="https://nodejs.org"><img src="https://img.shields.io/node/v/@the-coded/pstash.svg" alt="node" /></a>
 </p>
 
