@@ -1,6 +1,6 @@
 {
   "name": "@the-coded/pstash",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Git-backed personal file stash — persistent, project-categorized, multi-machine",
   "type": "module",
   "repository": {
