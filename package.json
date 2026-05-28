@@ -1,5 +1,5 @@
 {
-  "name": "pstash",
+  "name": "pstash-cli",
   "version": "0.1.0",
   "description": "Git-backed personal file stash — persistent, project-categorized, multi-machine",
   "type": "module",

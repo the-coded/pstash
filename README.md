@@ -1,9 +1,9 @@
 <h1 align="center">pstash</h1>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/pstash"><img src="https://img.shields.io/npm/v/pstash.svg" alt="npm version" /></a>
-  <a href="./LICENSE"><img src="https://img.shields.io/npm/l/pstash.svg" alt="license" /></a>
-  <a href="https://nodejs.org"><img src="https://img.shields.io/node/v/pstash.svg" alt="node" /></a>
+  <a href="https://www.npmjs.com/package/pstash-cli"><img src="https://img.shields.io/npm/v/pstash-cli.svg" alt="npm version" /></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/npm/l/pstash-cli.svg" alt="license" /></a>
+  <a href="https://nodejs.org"><img src="https://img.shields.io/node/v/pstash-cli.svg" alt="node" /></a>
 </p>
 
 <p align="center">
@@ -26,28 +26,38 @@ pstash pop
 
 ## Table of Contents
 
+- [Table of Contents](#table-of-contents)
 - [Overview](#overview)
+  - [How it works](#how-it-works)
 - [Architecture](#architecture)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
+  - [1. Create a private data repo](#1-create-a-private-data-repo)
+  - [2. Initialize pstash](#2-initialize-pstash)
+  - [3. Stash some files](#3-stash-some-files)
+  - [4. List your stashes](#4-list-your-stashes)
+  - [5. Restore stashes](#5-restore-stashes)
 - [Commands](#commands)
   - [Command Summary](#command-summary)
-  - [init](#init)
-  - [save](#save)
-  - [update](#update)
-  - [list](#list)
-  - [pop](#pop)
-  - [apply](#apply)
-  - [sync](#sync)
-  - [show](#show)
-  - [drop](#drop)
-  - [status](#status)
-  - [clean](#clean)
-  - [diff](#diff)
-  - [config](#config)
+  - [`init`](#init)
+  - [`save`](#save)
+  - [`update`](#update)
+  - [`list`](#list)
+  - [`pop`](#pop)
+  - [`apply`](#apply)
+  - [`sync`](#sync)
+  - [`show`](#show)
+  - [`drop`](#drop)
+  - [`status`](#status)
+  - [`clean`](#clean)
+  - [`diff`](#diff)
+  - [`config`](#config)
 - [Configuration](#configuration)
+  - [Config Keys](#config-keys)
+  - [Project Aliases](#project-aliases)
 - [Stash ID Format](#stash-id-format)
 - [Data Repo Structure](#data-repo-structure)
+  - [`.stash.json` format](#stashjson-format)
 - [Requirements](#requirements)
 - [License](#license)
 
@@ -106,7 +116,7 @@ pstash-cli/             ← this package (CLI code)
 ## Installation
 
 ```bash
-npm install -g pstash
+npm install -g pstash-cli
 ```
 
 > **Requirements**: Node 20+, Git
