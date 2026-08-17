@@ -15,6 +15,7 @@
  * - `defaults.compression`       — true/false
  * - `defaults.removeAfterSave`   — true/false
  * - `defaults.keepOnPop`         — true/false
+ * - `defaults.maxFileSizeMb`     — number (0 disables the oversized-file guard)
  *
  * @example
  * // List all config
@@ -42,13 +43,14 @@ export interface ConfigCommandOptions {
 }
 
 /** Map of all settable config key paths to their allowed types */
-const SETTABLE_KEYS: Record<string, "string" | "boolean"> = {
+const SETTABLE_KEYS: Record<string, "string" | "boolean" | "number"> = {
   remote: "string",
   localPath: "string",
   autoSync: "boolean",
   "defaults.compression": "boolean",
   "defaults.removeAfterSave": "boolean",
   "defaults.keepOnPop": "boolean",
+  "defaults.maxFileSizeMb": "number",
 }
 
 /**
@@ -103,6 +105,12 @@ function setConfigValue(config: GlobalConfig, key: string, rawValue: string): Gl
     if (rawValue === "true") parsedValue = true
     else if (rawValue === "false") parsedValue = false
     else throw new Error(`Invalid value for "${key}": must be "true" or "false"`)
+  } else if (expectedType === "number") {
+    const asNumber = Number(rawValue)
+    if (!Number.isFinite(asNumber) || asNumber < 0) {
+      throw new Error(`Invalid value for "${key}": must be a non-negative number`)
+    }
+    parsedValue = asNumber
   } else {
     parsedValue = rawValue
   }
@@ -139,6 +147,7 @@ function printConfigTable(config: GlobalConfig): void {
     ["defaults.compression", String(config.defaults.compression)],
     ["defaults.removeAfterSave", String(config.defaults.removeAfterSave)],
     ["defaults.keepOnPop", String(config.defaults.keepOnPop)],
+    ["defaults.maxFileSizeMb", String(config.defaults.maxFileSizeMb)],
     ["version", config.version],
   ]
 

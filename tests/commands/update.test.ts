@@ -12,7 +12,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 const gitMocks = vi.hoisted(() => ({
   pull: vi.fn().mockResolvedValue(undefined),
   push: vi.fn().mockResolvedValue(undefined),
-  commitAll: vi.fn().mockResolvedValue(undefined),
+  commitAll: vi.fn().mockResolvedValue([]),
 }))
 
 const stasherMocks = vi.hoisted(() => ({
@@ -271,7 +271,12 @@ describe("updateCommand — autoSync", () => {
 
     await updateCommand(0, ["*.md"], { force: true, tag: [] })
 
-    expect(gitMocks.commitAll).toHaveBeenCalledWith("update(my-project): updated")
+    // Second argument is the stash dir, force-added so the data repo's
+    // .gitignore can never silently drop what the user asked to stash.
+    expect(gitMocks.commitAll).toHaveBeenCalledWith(
+      "update(my-project): updated",
+      "my-project/stash-001",
+    )
   })
 })
 

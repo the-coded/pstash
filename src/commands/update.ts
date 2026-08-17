@@ -173,6 +173,7 @@ export async function updateCommand(
       branch,
       commit,
       compress: shouldCompress,
+      maxFileSizeMb: config.defaults.maxFileSizeMb,
     })
     spinner.succeed(
       chalk.green(
@@ -192,8 +193,18 @@ export async function updateCommand(
   // Git commit
   const commitSpinner = ora("Committing...").start()
   try {
-    await git.commitAll(`update(${project}): ${metadata.message}`)
+    const skipped = await git.commitAll(
+      `update(${project}): ${metadata.message}`,
+      `${project}/${metadata.id}`,
+    )
     commitSpinner.succeed(chalk.green("Committed"))
+    if (skipped.length > 0) {
+      console.log(
+        chalk.yellow(`  ! ${skipped.length} stashed file(s) were not committed:`) +
+          `\n${skipped.map((f) => `    ${f}`).join("\n")}` +
+          chalk.dim(`\n    A .gitignore rule in the stash repo is filtering them.`),
+      )
+    }
   } catch {
     commitSpinner.warn(chalk.dim("Nothing to commit"))
   }

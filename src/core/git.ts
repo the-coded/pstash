@@ -17,6 +17,7 @@
 import { join } from "node:path"
 import { writeFile } from "node:fs/promises"
 import { simpleGit } from "simple-git"
+import { globby } from "globby"
 import { ensureDir } from "../utils/fs.js"
 
 export class GitManager {
@@ -69,13 +70,43 @@ export class GitManager {
 
   /**
    * Stages all changes and creates a commit.
+   *
+   * `forcePath` is the stash directory (`<project>/<stashId>`) of a save or
+   * update. It is staged with `-f` because **what the user explicitly asked to
+   * stash must never be filtered by the data repo's `.gitignore`**: a plain
+   * `add -A` silently skips ignored files, so stashing `.env` would copy the
+   * files, commit nothing, push "successfully", and restore nothing on another
+   * machine. The ignore rules exist for stray files in the repo, not for stash
+   * payloads.
+   *
+   * @returns Paths that exist under `forcePath` but git did not record — always
+   * empty with the force-add above, kept as a safety net against future ignore
+   * rules. Empty array when `forcePath` is omitted.
    */
-  async commitAll(message: string): Promise<void> {
+  async commitAll(message: string, forcePath?: string): Promise<string[]> {
     const git = simpleGit(this.repoPath)
     await git.add("-A")
+    if (forcePath) await git.add(["-f", forcePath])
     const status = await git.status()
-    if (status.files.length === 0) return // Nothing to commit
+    if (status.files.length === 0) return [] // Nothing to commit
     await git.commit(message)
+    return forcePath ? await this.findUntrackedUnder(forcePath) : []
+  }
+
+  /**
+   * Files present on disk under `relativePath` that git is not tracking.
+   */
+  private async findUntrackedUnder(relativePath: string): Promise<string[]> {
+    const git = simpleGit(this.repoPath)
+    const tracked = new Set(
+      (await git.raw(["ls-files", "--", relativePath])).split("\n").filter(Boolean),
+    )
+    const onDisk = await globby("**/*", {
+      cwd: join(this.repoPath, relativePath),
+      dot: true,
+      onlyFiles: true,
+    })
+    return onDisk.map((f) => `${relativePath}/${f}`).filter((f) => !tracked.has(f))
   }
 
   /**

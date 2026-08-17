@@ -58,6 +58,7 @@ function makeConfig(
       keepOnPop: false,
       compression: true,
       removeAfterSave: false,
+      maxFileSizeMb: 50,
     },
   }
 }

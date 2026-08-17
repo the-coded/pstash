@@ -49,6 +49,46 @@ export function generateStashId(timestamp: Date = new Date()): string {
   return `${datePart}_${timePart}_${nanoid(4)}`
 }
 
+/**
+ * Throws when any of `filePaths` is larger than `maxFileSizeMb`.
+ *
+ * The stash data repo is pushed to git, where a big binary is a one-way trip:
+ * GitHub rejects files over 100 MB, and a blob stays in history even after the
+ * stash is dropped, so the only cure is rewriting history. Refusing at save
+ * time is the cheap moment to say no.
+ *
+ * `0` (or `undefined`) disables the check, for whoever knows what they are doing.
+ */
+async function assertNoOversizedFiles(
+  filePaths: string[],
+  maxFileSizeMb?: number,
+): Promise<void> {
+  if (!maxFileSizeMb || maxFileSizeMb <= 0) return
+
+  const limitBytes = maxFileSizeMb * 1024 * 1024
+  const oversized: Array<{ path: string; size: number }> = []
+
+  for (const filePath of filePaths) {
+    const { size } = await stat(filePath)
+    if (size > limitBytes) oversized.push({ path: filePath, size })
+  }
+
+  if (oversized.length === 0) return
+
+  const toMb = (bytes: number) => (bytes / 1024 / 1024).toFixed(1)
+  const list = oversized
+    .sort((a, b) => b.size - a.size)
+    .map(({ path, size }) => `  ${toMb(size).padStart(8)} MB  ${relative(process.cwd(), path)}`)
+    .join("\n")
+
+  throw new Error(
+    `Refusing to stash ${oversized.length} file(s) over ${maxFileSizeMb} MB:\n${list}\n\n` +
+      `The stash repo is pushed to git, and GitHub rejects files over 100 MB.\n` +
+      `Exclude them, or raise the limit with: pstash config defaults.maxFileSizeMb <n> ` +
+      `(0 disables the guard).`,
+  )
+}
+
 export class Stasher {
   private stashRepoPath: string
 
@@ -98,6 +138,7 @@ export class Stasher {
     branch?: string
     commit?: string
     compress?: boolean
+    maxFileSizeMb?: number
   }): Promise<StashMetadata> {
     const timestamp = new Date()
     const id = generateStashId(timestamp)
@@ -107,7 +148,12 @@ export class Stasher {
 
     let written
     try {
-      written = await this.writeStashContents(stashDir, options.files, options.compress === true)
+      written = await this.writeStashContents(
+        stashDir,
+        options.files,
+        options.compress === true,
+        options.maxFileSizeMb,
+      )
     } catch (err) {
       // Clean up empty dir on failure
       await rm(stashDir, { recursive: true, force: true })
@@ -164,6 +210,7 @@ export class Stasher {
     branch?: string
     commit?: string
     compress?: boolean
+    maxFileSizeMb?: number
   }): Promise<StashMetadata> {
     const stashDir = join(this.stashRepoPath, options.project, options.stashId)
 
@@ -216,13 +263,15 @@ export class Stasher {
    * @param stashDir - Absolute path to the (empty) target stash directory
    * @param filePatterns - Glob patterns relative to `process.cwd()`
    * @param shouldCompress - Whether to compress into `stash.tar.gz` after copying
+   * @param maxFileSizeMb - Refuse any single file above this; `0`/undefined disables
    *
-   * @throws {Error} If no files match the provided patterns
+   * @throws {Error} If no files match the provided patterns, or any file is oversized
    */
   private async writeStashContents(
     stashDir: string,
     filePatterns: string[],
     shouldCompress: boolean,
+    maxFileSizeMb?: number,
   ): Promise<{
     fileMetadata: StashMetadata["files"]
     totalSize: number
@@ -239,6 +288,12 @@ export class Stasher {
     if (resolvedFiles.length === 0) {
       throw new Error(`No files matched the patterns: ${filePatterns.join(", ")}`)
     }
+
+    // Size guard, BEFORE any copying. The loop below copies each file and then
+    // reads it whole into memory to hash it, so without this a 269 MB video is
+    // duplicated and buffered without a word — and the failure only surfaces
+    // later at `pstash sync`, pushing a repo GitHub will not accept.
+    await assertNoOversizedFiles(resolvedFiles, maxFileSizeMb)
 
     const fileMetadata: StashMetadata["files"] = []
     const copiedFileNames: string[] = []

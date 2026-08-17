@@ -217,6 +217,14 @@ export const GlobalConfigSchema = z.object({
      * Can be overridden per-operation: `--rm` to force delete, `--keep` to force keep.
      */
     removeAfterSave: z.boolean().default(false),
+    /**
+     * Refuse to stash any single file larger than this, in megabytes.
+     *
+     * The data repo is pushed to git, and GitHub rejects files over 100 MB
+     * outright — a stash that swallows a big binary only fails later, at
+     * `pstash sync`, far from the cause. Set to `0` to disable the guard.
+     */
+    maxFileSizeMb: z.number().nonnegative().default(50),
   }),
 })
 

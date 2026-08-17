@@ -25,6 +25,7 @@ export function createDefaultConfig(remote: string, localPath = "~/.pstash"): Gl
       keepOnPop: false,
       compression: false,
       removeAfterSave: false,
+      maxFileSizeMb: 50,
     },
   }
 }
@@ -68,4 +69,20 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+
+# Build and dependency output — regenerable, and it bloats every clone
+node_modules/
+dist/
+build/
+.venv/
+__pycache__/
+var/
+
+# Heavy binaries: the data repo is pushed to git, and GitHub rejects
+# files over 100 MB outright
+*.mp4
+*.mov
+*.mkv
+*.zip
+*.db
 `
